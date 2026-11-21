@@ -5,15 +5,6 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 // One blob per date (no read-modify-write), plus one config blob holding the passcode hash.
 const store = () => getStore({ name: "countdowns", consistency: "strong" });
 
-// The dates that existed before the move; written once, when the passcode is first created.
-const SEED: Record<string, unknown>[] = [
-  { id: "8j5m22irac6zh1nuapya", title: "Brussels", mode: "day", y: 2026, m: 12, d: 10, icon: "✈️", color: "jade", repeat: false, note: "", createdAt: 1795218910747 },
-  { id: "ex-christmas", title: "Christmas Eve", mode: "day", y: 2026, m: 12, d: 24, icon: "🎄", color: "jade", repeat: true, note: "", createdAt: 1795190000000 },
-  { id: "ex-ski", title: "Ski trip", mode: "day", y: 2027, m: 2, d: 28, icon: "🎿", color: "cobalt", repeat: false, note: "", example: true, createdAt: 1795190000000 },
-  { id: "ex-summer", title: "Summer holiday", mode: "month", y: 2027, m: 7, d: 1, icon: "🏝️", color: "rose", repeat: false, note: "Dates not fixed yet", example: true, createdAt: 1795190000000 },
-  { id: "ex-weekend", title: "Weekend away", mode: "day", y: 2026, m: 11, d: 30, icon: "🧳", color: "marigold", repeat: false, note: "", example: true, createdAt: 1795190000000 },
-];
-
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
@@ -61,10 +52,6 @@ export default async (req: Request, context: Context) => {
     const salt = randomBytes(16).toString("hex");
     const { modified } = await s.setJSON("config", { salt, hash: hash(pass, salt) }, { onlyIfNew: true });
     if (!modified) return json({ error: "claimed" }, 409);
-    for (const ev of SEED) {
-      const { id: seedId, ...rest } = ev;
-      await s.setJSON("ev/" + seedId, rest, { onlyIfNew: true });
-    }
     return json({ ok: true });
   }
 
