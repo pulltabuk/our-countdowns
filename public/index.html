@@ -221,6 +221,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .fld{display:flex;flex-direction:column;gap:10px;min-width:0}
 .fld>label,.fld>.lab{font-size:1.0625rem;font-weight:700;color:var(--fg)}
 .inp{font:inherit;font-size:18px;color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;min-width:0;min-height:60px}
+input.inp[type=date]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;text-align:left}
+input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--field);border-radius:14px;padding:4px;gap:4px}
 .seg button{border-radius:11px;padding:16px 8px;font-size:1rem;font-weight:700;text-align:center;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.18)}
@@ -299,7 +301,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
     <div class="acts"><button class="btn" type="button" id="manage-add">+ Add a date</button></div>
     <p class="hint">Your dates. Tap one to change or delete it.</p>
     <div class="rows" id="manage-rows"></div>
-    <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button></div>
+    <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
   </div>
 </div>
 
@@ -685,7 +687,18 @@ $("gate-form").addEventListener("submit",async e=>{
   $("g-go").disabled=false;
 });
 
+/* pick up new versions without a reload button: compare the build stamp when the app is opened */
+const BUILD="1795266076";
+async function checkUpdate(force){
+  try{
+    const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
+    let tried="";try{tried=sessionStorage.getItem("oc.tried")||""}catch(e){}
+    if(v&&v!==BUILD&&(force||tried!==v)&&$("editor").hidden){try{sessionStorage.setItem("oc.tried",v)}catch(e){}location.reload()}
+  }catch(e){}
+}
+$("reload").addEventListener("click",()=>{$("reload").textContent="Checking";checkUpdate(true).then(()=>setTimeout(()=>location.reload(),600))});
 async function boot(){
+  checkUpdate();document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});
   events=readCache();lastJSON=JSON.stringify(events);loaded=events.length>0;render();
   if(pass)sync();
   else{
