@@ -54,7 +54,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .strip .card{flex:0 0 196px;scroll-snap-align:start}
 .card{position:relative;overflow:hidden;border-radius:28px;background:var(--c);color:var(--ink);padding:20px;display:flex;flex-direction:column;min-width:0;isolation:isolate;
   background-image:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.28),transparent 55%),radial-gradient(90% 80% at 100% 100%,rgba(0,0,0,.16),transparent 60%);
-  box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 10px 24px -14px var(--c);transition:transform .15s ease}
+  box-shadow:0 1px 0 rgba(255,255,255,.25) inset;transition:transform .15s ease}
 .card:active{transform:scale(.975)}
 .card.hero,.card.wide{grid-column:1/-1}
 .top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:34px}
@@ -96,7 +96,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .lrow .tag{align-self:flex-start}
 .lrow .ttl{font-size:1.25rem;overflow-wrap:break-word;hyphens:auto}
 .lrow .when{font-size:.875rem}
-.lrow .pips{gap:4px;margin-top:4px}.lrow .pips i{width:8px;height:8px;flex:none}
+
 .lrow .side{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 16px 12px 0;text-align:center}
 .lrow .body{padding-right:10px}
 /* departure-board digits: one flap per digit, in the card's own ink */
@@ -117,7 +117,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .big .wm{width:72px;height:72px;font-size:2.6rem}
 .big .ttl{font-size:1.5rem}
 .big .when{font-size:1rem}
-.big .pips{gap:5px;margin-top:8px}.big .pips i{width:8px;height:8px}
+
 .big .side{gap:14px}
 .big .num{font-size:4.3rem}
 .big .num.d4{font-size:3.3rem}
@@ -125,13 +125,21 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .big .unit{font-size:.8125rem}
 
 .tick{font-variant-numeric:tabular-nums;font-size:.8125rem;font-weight:600;opacity:.85}
-.pips{display:flex;gap:6px;margin-top:10px}
-.pips i{width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 1.5px var(--ink) inset;display:block}
-.pips i.on{background:var(--ink)}
+.pips{display:flex;gap:3px;margin-top:6px;width:100%;max-width:190px}
+.pips i{flex:1;height:9px;border-radius:3px;background:var(--ink);opacity:.22;display:block}
+.pips i.on{opacity:1}
+.pcap{font-size:.75rem;font-weight:600;opacity:.85;display:block}
+.ft{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.ft b{aspect-ratio:1;display:grid;place-items:center;border-radius:9px;font-family:var(--display);font-weight:800;font-size:1rem;box-shadow:0 0 0 1.5px var(--ink) inset}
+.ft b.gone{opacity:.3;text-decoration:line-through}
+.ft b.now{background:var(--ink);color:var(--c);transform:scale(1.12)}
+.ahead{display:flex;flex-direction:column;gap:8px}
+.ahead div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
+.ahead b{font-family:var(--display);font-size:1.15rem;white-space:nowrap}
 
 /* special days */
 .s-milestone::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.6) 50%,transparent 64%);transform:translateX(-130%);animation:sweep 3s ease-in-out infinite}
-.s-milestone,.s-final{animation:glow 1.8s ease-in-out infinite}
+.card.s-milestone::before,.card.s-final::before{content:"";position:absolute;inset:0;border-radius:inherit;border:4px solid rgba(255,255,255,.75);opacity:0;pointer-events:none;animation:ring 1.8s ease-in-out infinite;will-change:opacity}
 .s-milestone .pz,.s-final .pz,.s-today .pz{animation:wobble 1.5s ease-in-out infinite}
 .s-today{background-image:linear-gradient(115deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.5) 40%,rgba(255,255,255,0) 60%,rgba(255,255,255,.35) 80%,rgba(255,255,255,0));background-size:260% 100%;animation:party 3.2s linear infinite}
 .s-today .bigico{animation:hop 1s cubic-bezier(.3,1.6,.6,1) infinite alternate}
@@ -139,7 +147,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .stamp .spin{transform-origin:60px 60px;animation:spin 16s linear infinite}
 .detail.s-milestone .dhead{padding-right:124px}
 @keyframes sweep{0%,35%{transform:translateX(-130%)}75%,100%{transform:translateX(130%)}}
-@keyframes glow{0%,100%{box-shadow:0 0 0 0 var(--c),0 10px 24px -14px var(--c)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 40%,transparent),0 14px 34px -10px var(--c)}}
+@keyframes ring{0%,100%{opacity:0}50%{opacity:1}}
 @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 @keyframes party{to{background-position:-260% 0}}
 @keyframes hop{from{transform:rotate(-14deg) translateY(0)}to{transform:rotate(10deg) translateY(-12px)}}
@@ -180,7 +188,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .detail .num.word{font-size:clamp(4.4rem,25vw,8rem);line-height:.9}
 .detail .stamp{top:0;right:0;width:112px;height:112px}
 .shout{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
-.detail .pips i{width:18px;height:18px}.detail .pips{gap:8px}
+
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .stat{border-radius:18px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px var(--ink) inset;min-width:0}
 .stat b{font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:-.03em;display:block;line-height:1;font-variant-numeric:tabular-nums}
@@ -229,8 +237,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 
 /* poster art: flat 1930s travel-poster scenes, tinted from each date's colour */
 .pz{position:relative;flex:none;align-self:center;margin-left:18px;width:60px;transform:rotate(-3deg)}
-.pz svg{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 3px #FFF1D0,0 6px 14px -4px rgba(0,0,0,.5)}
-.pz em{position:absolute;right:-10px;bottom:-9px;font-style:normal;font-size:1.4rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.pz svg{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 3px #FFF1D0,0 3px 0 3px rgba(0,0,0,.18)}
+.pz em{position:absolute;right:-10px;bottom:-9px;font-style:normal;font-size:1.4rem;line-height:1}
 .card.big{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-content:center}
 .big .pz{grid-row:1/3;width:104px;margin-left:20px}
 .big .pz em{font-size:2rem;right:-13px;bottom:-12px}
@@ -374,7 +382,8 @@ function tagText(I){
   if(I.state==="final")return I.days===1?"Tomorrow":I.days===7?"One week":"Final ten";
   return"";
 }
-function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+"</span>"}
+function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+'</span><span class="pcap">'+n+" of the last 10 days left</span>"}
+function finalTrack(n){let h='<div class="sec"><h3>The final ten days</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+i+"</b>";return h+'</div><div class="small">The filled box is today. Crossed-out days are behind you.</div></div>'}
 function stamp(n,sfx){
   const t=(n+" DAYS TO GO  ★  ").repeat(2);
   return'<svg class="stamp" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="sp'+sfx+'" d="M60,60 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"/></defs><g class="spin"><text font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#sp'+sfx+'" textLength="278">'+t+'</textPath></text></g><text x="60" y="73" text-anchor="middle" font-size="36" fill="currentColor">★</text></svg>';
@@ -488,22 +497,16 @@ function renderDetail(ev){
   h+='<div><span class="num'+(w.word?" word":"")+'">'+esc(w.num)+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
-  if(I.state==="final")h+=pips(I.days);
+  if(I.state==="final")h+=finalTrack(I.days);
   if(I.state!=="today"&&I.state!=="past"){
     if(pv==null)h+='<div class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</div>";
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><b>'+(I.days/7).toFixed(1)+'</b><span>weeks</span></div><div class="stat"><b>'+wk+'</b><span>weekends</span></div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span>hours</span></div></div>";
-    h+='<div class="sec"><h3>Day map</h3>';
-    if(I.days<=366){
-      h+='<div class="map" aria-hidden="true">';
-      for(let i=0;i<I.days;i++){const left=I.days-i;h+='<i class="'+(i===0?"now ":"")+(MILESTONES.includes(left)?"ms":left<=10?"fin":"")+'"></i>'}
-      h+="<span>"+esc(ev.icon)+'</span></div><div class="small">One dot per day. Rings are special days, solid dots are the final ten.</div>';
-    }else h+='<div class="small">The day map appears once you are within a year.</div>';
-    h+="</div>";
-    const nx=[300,200,100,75,50,25,10].find(m=>m<I.days);
-    if(nx&&pv==null){const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-nx);
-      h+='<div class="sec"><h3>Next special day</h3><div class="small">'+nx+" days to go lands on "+nd.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})+".</div></div>"}
+    const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
+    if(ahead.length){
+      h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
+        return"<div><b>"+(m===10?"Final ten begin":m+" days to go")+"</b><span>"+nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+"</span></div>"}).join("")+"</div></div>"}
     if(ev.createdAt&&pv==null&&real.t>ev.createdAt){const pct=Math.max(0,Math.min(100,Math.round((now-ev.createdAt)/(real.t-ev.createdAt)*100)));
       h+='<div class="sec"><h3>The wait so far</h3><div class="bar"><i style="width:'+pct+'%"></i></div><div class="small">'+pct+"% of the wait is behind you.</div></div>"}
   }
