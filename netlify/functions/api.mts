@@ -27,6 +27,7 @@ function clean(b: Record<string, unknown>) {
     icon: str(b.icon, 16),
     color: str(b.color, 16),
     scene: str(b.scene, 16),
+    transport: str(b.transport, 12),
     repeat: !!b.repeat,
     important: !!b.important,
     note: str(b.note, 200),
