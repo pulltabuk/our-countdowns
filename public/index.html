@@ -147,6 +147,10 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .stamp .spin{transform-origin:60px 60px;animation:spin 16s linear infinite}
 .detail.s-milestone .dhead{padding-right:124px}
 @keyframes sweep{0%,35%{transform:translateX(-130%)}75%,100%{transform:translateX(130%)}}
+/* inside a date the poster moves once, then rests */
+.detail.s-milestone .pz,.detail.s-final .pz,.detail.s-today .pz{animation:once 1.3s ease-in-out 1}
+.detail .stamp .spin{animation:spin 4s ease-in-out 1}
+@keyframes once{0%,100%{transform:rotate(-3deg)}30%{transform:rotate(9deg) scale(1.08)}65%{transform:rotate(-10deg) scale(1.04)}}
 @keyframes ring{0%,100%{opacity:0}50%{opacity:1}}
 @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 @keyframes party{to{background-position:-260% 0}}
@@ -514,7 +518,7 @@ function renderDetail(ev){
   h+="</div>";
   el.innerHTML=h;el.scrollTop=keep;
 }
-function openDetail(id){const ev=events.find(e=>e.id===id);if(!ev)return;openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
+function openDetail(id){const ev=events.find(e=>e.id===id);if(!ev)return;history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
   if(info(ev,new Date()).state==="today"){partied.add(id+lastDay);celebrate(ev);fanfare()}}
 function closeDetail(){openId=null;pv=null;$("detail").hidden=true;$("detail").innerHTML="";lock()}
 /* Screens sit in the normal page flow (no fixed overlays), so every button can be scrolled to. */
@@ -528,7 +532,7 @@ function lock(){
 
 $("detail").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const ev=events.find(x=>x.id===openId);if(!ev)return;
-  if(b.hasAttribute("data-dclose"))closeDetail();
+  if(b.hasAttribute("data-dclose"))history.back();
   else if(b.hasAttribute("data-dedit"))openEditor(ev);
   else if(b.hasAttribute("data-party")){celebrate(ev);fanfare()}
   else if(b.dataset.pv!=null){pv=b.dataset.pv==="live"?null:+b.dataset.pv;const x=b.parentNode.scrollLeft;renderDetail(ev);const sc=$("detail").querySelector(".scroll");if(sc)sc.scrollLeft=x;
@@ -545,10 +549,15 @@ let back=null;
 function closeEditor(){$("editor").hidden=true;if(back==="manage")$("manage").hidden=false;back=null;lock()}
 
 /* ---------- manage + editor ---------- */
-$("open-manage").addEventListener("click",()=>{$("manage").hidden=false;lock()});
+$("open-manage").addEventListener("click",()=>{history.pushState({oc:1},"");$("manage").hidden=false;lock()});
+window.addEventListener("popstate",()=>{
+  if(!$("editor").hidden)closeEditor();
+  else if(!$("manage").hidden){$("manage").hidden=true;lock()}
+  else if(openId)closeDetail();
+});
 $("quick-add").addEventListener("click",()=>openEditor(null));
 $("manage-add").addEventListener("click",()=>openEditor(null,"manage"));
-document.querySelectorAll(".sheet").forEach(s=>s.addEventListener("click",e=>{if(s.id!=="gate"&&(e.target===s||e.target.closest("[data-close]"))){if(s.id==="editor")closeEditor();else{s.hidden=true;lock()}}}));
+document.querySelectorAll(".sheet").forEach(s=>s.addEventListener("click",e=>{if(s.id!=="gate"&&(e.target===s||e.target.closest("[data-close]")))history.back()}));
 $("clear-examples").addEventListener("click",async()=>{
   const ex=events.filter(e=>e.example);
   for(const e of ex){try{await remove(e.id)}catch(err){}}
@@ -570,7 +579,7 @@ function syncForm(){
 }
 function openEditor(ev,from){
   if(!canWrite)return;
-  back=from||null;
+  back=from||null;history.pushState({oc:1},"");
   editing=ev?ev.id:null;const now=new Date(),pad=n=>String(n).padStart(2,"0");
   draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color}:{mode:"day",icon:ICONS[Math.floor(Math.random()*ICONS.length)],color:COLORS[events.length%COLORS.length].id};
   $("form-title").textContent=ev?"Edit date":"New date";
@@ -599,13 +608,13 @@ $("form").addEventListener("submit",async e=>{
   const old=editing&&events.find(x=>x.id===editing);
   const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now()};
   $("f-save").disabled=true;$("f-save").textContent="Saving";
-  try{await save(editing,body);closeEditor()}
+  try{await save(editing,body);history.back()}
   catch(err){fail("That did not save. Check your connection and try again.");$("f-save").disabled=false;$("f-save").textContent="Save"}
 });
 $("f-delete").addEventListener("click",async()=>{
   const b=$("f-delete");
   if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap again to delete";setTimeout(()=>{delete b.dataset.armed;b.textContent="Delete"},3500);return}
-  try{const id=editing;await remove(id);if(openId===id)closeDetail();closeEditor()}catch(err){fail("That did not delete. Try again.")}
+  try{const id=editing,both=openId===id;await remove(id);if(both){openId=null;$("detail").hidden=true;history.go(-2)}else history.back()}catch(err){fail("That did not delete. Try again.")}
 });
 
 /* ---------- storage: a shared store behind one passcode ---------- */
