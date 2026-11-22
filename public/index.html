@@ -48,6 +48,10 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .sq.dark{background:#000;color:#fff;border-color:rgba(255,255,255,.3);font-size:2.2rem;font-weight:500;line-height:1}
 .status{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:.875rem;color:var(--muted)}
 
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pick span{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pick select{font:inherit;font-size:16px;font-weight:700;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0 14px;min-height:54px;width:100%;min-width:0}
 .wall{display:flex;flex-direction:column;gap:12px}
 .lab2{font-size:.8125rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:10px 0 -4px}
 .strip{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:10px 16px 18px;scroll-padding-left:16px;scrollbar-width:none}
@@ -166,6 +170,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .dtop .flap b.w{width:auto;height:76px;padding:0 16px;font-size:2rem}
 .detail .dtop .unit{margin-top:0}
 .stat span.wk.two{font-family:var(--display);font-size:1.15rem;font-weight:800;line-height:1.3;white-space:nowrap}
+.stat span.wk.two.long{font-size:1rem}
+.stat b.sm{font-size:1.25rem}.stat b.xs{font-size:1.05rem}
 .stat span.wk{font-size:1rem;font-weight:700;letter-spacing:0;text-transform:none;opacity:1;line-height:1.2}
 .claim{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);padding-top:22px;font-weight:600}
 .claim span{flex:1 1 140px}
@@ -243,8 +249,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .detail .stamp{top:0;right:0;width:112px;height:112px}
 .shout{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
 
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.stat{border-radius:18px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px var(--ink) inset;min-width:0}
+.stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px}
+.stat{border-radius:18px;padding:16px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px var(--ink) inset;min-width:0}
 .stat b{font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:-.03em;display:block;line-height:1;font-variant-numeric:tabular-nums}
 .stat span{font-size:.6875rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;opacity:.8}
 .sec{display:flex;flex-direction:column;gap:12px}
@@ -328,6 +334,10 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="hbtns"><button class="sq dark" id="quick-add" type="button" aria-label="Add a date">+</button><button class="sq" id="open-manage" type="button" aria-label="Menu"><i></i><i></i><i></i></button></div>
   </header>
   <div class="status" id="status" hidden></div>
+  <div class="tools" id="tools" hidden>
+    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest first</option><option value="far">Furthest away first</option><option value="az">A to Z</option></select></label>
+    <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option></select></label>
+  </div>
   <main class="wall" id="wall" aria-live="polite"></main>
   <section class="mem" id="mem" hidden>
     <h2>Memories</h2>
@@ -397,7 +407,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option></select></div>
     <div class="fld"><span class="lab">How are you getting there?</span><div class="tr" id="f-transport"></div></div>
     <div class="fld"><span class="lab">Who can see this?</span>
-      <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">👥 Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">🔒 Only me</button></div>
+      <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">👥 Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">👤 Only me</button></div>
       <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
     <label class="check" for="f-repeat"><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
@@ -542,12 +552,16 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span class="vi" title="Only you can see this">🔒</span> ':"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span class="vi" title="Only you can see this">👤</span> ':"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
 }
 
+let view={sort:"soon",show:"all"};
+try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine"].includes(v.show))view.show=v.show}catch(e){}
+$("sort").value=view.sort;$("show").value=view.show;
+["sort","show"].forEach(k=>$(k).addEventListener("change",e=>{view[k]=e.target.value;try{localStorage.setItem("oc.view",JSON.stringify(view))}catch(x){}render()}));
 function sorted(){
   const now=new Date(),act=[],past=[];
   events.forEach(ev=>{if(!ev||!ev.title||!ev.y)return;const I=info(ev,now);(I.state==="past"?past:act).push({ev,I})});
@@ -560,12 +574,17 @@ function render(){
   const now=new Date();lastDay=dayKey(now);
   $("today-line").textContent=now.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
   const{act,past}=sorted(),wall=$("wall");
+  $("tools").hidden=!act.length;
   if(!act.length){
     wall.innerHTML=!loaded
       ?'<div class="empty"><b>Fetching your dates</b><p>Your countdowns will appear here in a moment.</p></div>'
       :'<div class="empty"><b>Nothing to count down to yet</b><p>Add a trip, a birthday or a big day and it becomes a poster here, counting down for both of you.</p>'+(canWrite?'<button class="btn" type="button" data-add>Add your first date</button>':"")+"</div>";
   }else{
-    wall.innerHTML=act.map(a=>cardHTML(a.ev,a.ev.important?"lrow big":"lrow")).join("");
+    let list=view.show==="shared"?act.filter(a=>!a.ev.priv):view.show==="mine"?act.filter(a=>a.ev.priv):act;
+    if(view.sort==="far")list=list.slice().reverse();
+    else if(view.sort==="az")list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));
+    wall.innerHTML=list.length?list.map(a=>cardHTML(a.ev,a.ev.important?"lrow big":"lrow")).join("")
+      :'<div class="empty"><b>Nothing to show here</b><p>'+(view.show==="mine"?"You have no private events. Choose Everything to see the shared ones.":"Every event is private. Choose Everything to see them.")+"</p></div>";
   }
   $("mem").hidden=!past.length;
   $("mem-rows").innerHTML=past.map(a=>rowHTML(a.ev,(-a.I.days)+(a.I.days===-1?" day ago":" days ago"),canWrite?"Edit":"")).join("");
@@ -597,7 +616,7 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span title="Only you can see this">🔒</span> ':"")+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span title="Only you can see this">👤</span> ':"")+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -605,7 +624,7 @@ function renderDetail(ev){
   if(I.state!=="today"&&I.state!=="past"){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    h+='<div class="stats"><div class="stat"><span class="wk two">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b>'+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
+    h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
     const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
     if(ahead.length){
       h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
@@ -886,7 +905,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795380424";
+const BUILD="1795380753";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
