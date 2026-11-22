@@ -28,6 +28,13 @@ function clean(b: Record<string, unknown>) {
     color: str(b.color, 16),
     scene: str(b.scene, 16),
     transport: str(b.transport, 12),
+    by: /^[A-Za-z0-9_-]{1,40}$/.test(String(b.by ?? "")) ? String(b.by) : "",
+    todo: (Array.isArray(b.todo) ? b.todo : []).slice(0, 40).map((t: Record<string, unknown>) => ({
+      id: str(t?.id, 20),
+      text: str(t?.text, 80).trim(),
+      done: !!t?.done,
+      by: str(t?.by, 40),
+    })).filter((t) => t.id && t.text),
     repeat: !!b.repeat,
     important: !!b.important,
     note: str(b.note, 200),
@@ -62,6 +69,22 @@ export default async (req: Request, context: Context) => {
   const want = Buffer.from(cfg.hash, "hex");
   if (given.length !== want.length || !timingSafeEqual(given, want)) return json({ error: "auth" }, 401);
 
+  // "rev" changes on every write, so phones can poll it cheaply and only reload when it moves.
+  const bump = () => s.set("meta/rev", String(Date.now()));
+  if (head === "rev" && req.method === "GET") return json({ rev: (await s.get("meta/rev")) || "0" });
+
+  if (head === "profiles" && req.method === "PUT") {
+    if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
+    const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const name = str(b.name, 24).trim();
+    const photo = String(b.photo ?? "");
+    if (!name) return json({ error: "invalid" }, 400);
+    if (photo && (!photo.startsWith("data:image/jpeg;base64,") || photo.length > 80000)) return json({ error: "photo" }, 400);
+    await s.setJSON("pf/" + id, { name, photo });
+    await bump();
+    return json({ ok: true });
+  }
+
   if (head !== "events") return json({ error: "not found" }, 404);
 
   if (!id && req.method === "GET") {
@@ -74,7 +97,16 @@ export default async (req: Request, context: Context) => {
         }),
       )
     ).filter(Boolean);
-    return json({ events });
+    const pf = await s.list({ prefix: "pf/" });
+    const profiles = (
+      await Promise.all(
+        pf.blobs.map(async (b) => {
+          const data = (await s.get(b.key, { type: "json" })) as Record<string, unknown> | null;
+          return data ? { ...data, id: b.key.slice(3) } : null;
+        }),
+      )
+    ).filter(Boolean);
+    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles });
   }
 
   if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
@@ -83,10 +115,12 @@ export default async (req: Request, context: Context) => {
     const data = clean((await req.json().catch(() => ({}))) as Record<string, unknown>);
     if (!data) return json({ error: "invalid" }, 400);
     await s.setJSON("ev/" + id, data);
+    await bump();
     return json({ ok: true });
   }
   if (req.method === "DELETE") {
     await s.delete("ev/" + id);
+    await bump();
     return json({ ok: true });
   }
   return json({ error: "method" }, 405);
@@ -94,6 +128,6 @@ export default async (req: Request, context: Context) => {
 
 export const config: Config = {
   path: ["/api", "/api/*"],
-  // Slows down passcode guessing; normal use is one sync every 20 seconds.
-  rateLimit: { windowLimit: 40, windowSize: 60, aggregateBy: ["ip", "domain"] },
+  // Slows down passcode guessing; normal use is one small check every 6 seconds per phone.
+  rateLimit: { windowLimit: 90, windowSize: 60, aggregateBy: ["ip", "domain"] },
 };

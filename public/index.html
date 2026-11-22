@@ -14,7 +14,8 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="icon" href="/icon-180.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Layout: a wall of colour-blocked posters. Size means nearness: the next date is a tall poster,
    special days go full width, the rest sit as half-width tiles. The numeral is the artwork. */
@@ -147,6 +148,40 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .stamp .spin{transform-origin:60px 60px;animation:spin 16s linear infinite}
 .detail.s-milestone .dhead{padding-right:124px}
 @keyframes sweep{0%,35%{transform:translateX(-130%)}75%,100%{transform:translateX(130%)}}
+/* event page: poster on the left, the count large beside it */
+.dtop{display:flex;align-items:center;gap:24px}
+.detail .dtop .pz{width:38%;max-width:150px;margin:0 0 0 6px;flex:none;align-self:center}
+.detail .dtop .pz svg{border-radius:8px;box-shadow:0 0 0 4px #FFF1D0,0 4px 0 4px rgba(0,0,0,.18)}
+.detail .dtop .pz em{font-size:2.1rem;right:-14px;bottom:-12px}
+.detail .dtop .pz em.tp{right:auto;left:-14px}
+.dtop .cnt{min-width:0;flex:1}
+.detail .dtop .num{font-size:clamp(5.6rem,31vw,9rem)}
+.detail .dtop .num.n3{font-size:clamp(4.2rem,23vw,7rem)}
+.detail .dtop .num.n4{font-size:clamp(3.2rem,17vw,5.4rem)}
+.detail .dtop .num.word{font-size:clamp(2.4rem,12vw,3.8rem)}
+/* shared checklist */
+.todo{display:flex;flex-direction:column;gap:8px}
+.ti{display:flex;align-items:center;gap:12px;border-radius:16px;padding:10px 12px;box-shadow:0 0 0 1.5px var(--ink) inset;min-height:58px}
+.ti>span{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.ti.done>span{text-decoration:line-through;opacity:.6}
+.tk{width:36px;height:36px;border-radius:11px;box-shadow:0 0 0 2px var(--ink) inset;flex:none;display:grid;place-items:center;font-size:1.3rem;font-weight:800}
+.ti.done .tk{background:var(--ink);color:var(--c)}
+.tx{width:36px;height:36px;flex:none;display:grid;place-items:center;font-size:1rem;opacity:.7}
+.tadd{display:flex;gap:8px}.tadd .inp{flex:1}.tadd .bigbtn{flex:none;padding:0 22px}
+/* people */
+.av{display:inline-grid;place-items:center;border-radius:50%;background:var(--ink,var(--fg));color:var(--c,var(--bg));font-weight:800;object-fit:cover;flex:none;overflow:hidden;width:44px;height:44px;font-size:1.1rem}
+.av.sm{width:28px;height:28px;font-size:.8rem}.av.lg{width:64px;height:64px;font-size:1.6rem}.av.xl{width:96px;height:96px;font-size:2.4rem}
+.byline{display:flex;align-items:center;gap:14px;border-top:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);padding-top:22px}
+.byline b{display:block;font-family:var(--display);font-size:1.2rem}.byline span{font-size:.875rem;opacity:.85}
+.pfrow{display:flex;align-items:center;gap:16px}
+.merow{display:flex;align-items:center;gap:14px;background:var(--field);border-radius:20px;padding:14px 16px;width:100%}
+.merow .rt{flex:1;min-width:0}.merow b{display:block;font-size:1.0625rem}.merow .rt span{font-size:.9rem;color:var(--muted)}
+.sugg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--field);border-radius:16px;padding:12px 14px;font-weight:600}
+.sugg i{width:26px;height:26px;border-radius:50%;background:var(--c);flex:none;display:block}
+.sugg span{flex:1 1 150px;min-width:0}
+.mini{border-radius:999px;padding:11px 18px;font-weight:700;background:var(--fg);color:var(--bg);min-height:46px}
+.mini.ghost{background:transparent;color:var(--fg);box-shadow:0 0 0 1.5px var(--line) inset}
+
 /* inside a date the poster moves once, then rests */
 .detail.s-milestone .pz,.detail.s-final .pz,.detail.s-today .pz{animation:once 1.3s ease-in-out 1}
 .detail .stamp .spin{animation:spin 4s ease-in-out 1}
@@ -257,7 +292,8 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 .detail .pz{width:min(60%,230px);margin:4px 0 14px 8px;align-self:flex-start}
 .detail .pz svg{border-radius:10px;box-shadow:0 0 0 6px #FFF1D0,0 14px 30px -10px rgba(0,0,0,.55)}
 .detail .pz em{font-size:3.2rem;right:-22px;bottom:-16px}
-.preview .pz{width:48px;margin:0 8px 0 4px}
+.preview #f-pz{display:flex;flex:none}
+.preview .pz{display:block;width:48px;margin:0 8px 0 4px}
 .sk{fill:color-mix(in srgb,var(--c) 28%,#FFF1D0)}.ry{fill:color-mix(in srgb,var(--c) 48%,#FFF1D0)}.sn{fill:#FFE08A}
 .fa{fill:color-mix(in srgb,var(--c) 72%,#FFF1D0)}.mi{fill:color-mix(in srgb,var(--c) 78%,#20143A)}.dk{fill:color-mix(in srgb,var(--c) 30%,#20143A)}
 .cr{fill:#FFF1D0}.ac{fill:#F2583A}
@@ -293,11 +329,23 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="acts"><button class="btn" type="submit" id="g-go">Open</button></div>
   </form>
 </div>
+<div class="sheet" id="profile" hidden>
+  <form class="panel" id="pf-form" novalidate>
+    <div class="phead"><h2>Your profile</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
+    <p class="hint">Your name and photo appear beside the dates and list items you add, so you can both see who added what.</p>
+    <div class="fld" id="pf-pick" hidden><span class="lab">Already set up on another phone? Tap yourself.</span><div class="rows" id="pf-list"></div></div>
+    <div class="pfrow"><span id="pf-av"></span><label class="btn ghost" for="pf-file">Choose a photo</label><input id="pf-file" type="file" accept="image/*" hidden></div>
+    <div class="fld"><label for="pf-name">Your name</label><input class="inp" id="pf-name" maxlength="24" autocomplete="given-name"></div>
+    <div class="err" id="pf-err" hidden></div>
+    <div class="acts"><button class="btn" type="submit" id="pf-save">Save</button></div>
+  </form>
+</div>
 <div class="detail" id="detail" hidden></div>
 
 <div class="sheet" id="manage" hidden>
   <div class="panel" role="dialog" aria-label="Manage dates">
     <div class="phead"><h2>Menu</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
+    <button type="button" class="merow" id="me-row"></button>
     <div class="acts"><button class="btn" type="button" id="manage-add">+ Add a date</button></div>
     <p class="hint">Your dates. Tap one to change or delete it.</p>
     <div class="rows" id="manage-rows"></div>
@@ -311,6 +359,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="preview" id="f-preview"><span id="f-pz"></span><b>Your countdown</b></div>
     <div class="fld"><label for="f-title">Name</label>
       <input class="inp" id="f-title" maxlength="60" placeholder="Trip to Lisbon" autocomplete="off"></div>
+    <div class="sugg" id="f-sugg" hidden><i id="f-sugg-dot"></i><span id="f-sugg-text"></span><button type="button" class="mini" id="f-sugg-yes">Use it</button><button type="button" class="mini ghost" id="f-sugg-no">No thanks</button></div>
     <div class="fld"><span class="lab">Do you know the exact day?</span>
       <div class="seg"><button type="button" id="f-mode-day" aria-pressed="true">Yes, exact day</button><button type="button" id="f-mode-month" aria-pressed="false">No, just the month</button></div></div>
     <div class="fld" id="f-day-wrap"><label for="f-date">Date</label><input class="inp" id="f-date" type="date"></div>
@@ -446,6 +495,15 @@ function posterHTML(ev,titled){
   return h+"</svg>"+(ev.icon?"<em>"+esc(ev.icon)+"</em>":"")+(TR_ICON[ev.transport]?'<em class="tp">'+TR_ICON[ev.transport]+"</em>":"")+"</span>";
 }
 
+let profiles={},me="";
+try{profiles=JSON.parse(localStorage.getItem("oc.pf")||"{}")||{};me=localStorage.getItem("oc.me")||""}catch(e){}
+const okPhoto=p=>typeof p==="string"&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p)?p:"";
+function avatar(id,size){
+  const p=profiles[id];if(!p)return"";
+  return p.photo?'<img class="av '+size+'" src="'+p.photo+'" alt="">':'<span class="av '+size+'">'+esc((p.name||"?").trim().charAt(0).toUpperCase())+"</span>";
+}
+const SCENE_COLOR={city:"cobalt",beach:"marigold",mountains:"jade",ski:"sky",sea:"cobalt",country:"lime",home:"flame",xmas:"flame",party:"orchid"};
+
 function cardHTML(ev,fmt){
   const I=info(ev,new Date()),w=words(ev,I),tag=tagText(I);
   let h='<button type="button" class="card '+fmt+" s-"+I.state+'" style="'+styleOf(ev,I)+'" data-id="'+esc(ev.id)+'">';
@@ -493,6 +551,8 @@ function rowHTML(ev,sub,action){
   return'<button type="button" class="row" data-edit="'+esc(ev.id)+'"><span class="sw" style="--c:'+c.bg+'">'+esc(ev.icon)+'</span><span class="rt"><b>'+esc(ev.title)+"</b><span>"+esc(sub)+"</span></span>"+(action?'<span class="go">'+action+"</span>":"")+"</button>";
 }
 function renderManage(){
+  const mp=profiles[me];
+  $("me-row").innerHTML=(mp?avatar(me,"md"):'<span class="av md">?</span>')+'<span class="rt"><b>'+(mp?esc(mp.name):"Add your name and photo")+"</b><span>"+(mp?"Your profile":"So you can both see who added what")+'</span></span><span class="go">'+(mp?"Change":"Set up")+"</span>";
   const now=new Date(),list=events.filter(e=>e&&e.title&&e.y).map(ev=>({ev,I:info(ev,now)})).sort((a,b)=>a.I.t-b.I.t);
   $("manage-rows").innerHTML=list.length?list.map(a=>rowHTML(a.ev,whenText(a.ev,a.I.t)+(a.ev.repeat?" · yearly":"")+(a.ev.example?" · example":""),canWrite?"Edit":"")).join("")
     :'<div class="row"><span class="rt"><span>No dates yet. Add the first one below.</span></span></div>';
@@ -506,8 +566,8 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+posterHTML(ev,true)+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · going by "+ev.transport:"")+"</span></div>";
-  h+='<div><span class="num'+(w.word?" word":"")+'">'+esc(w.num)+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="num'+(w.word?" word":" n"+w.num.length)+'">'+esc(w.num)+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
   if(I.state==="final")h+=finalTrack(I.days);
@@ -515,17 +575,23 @@ function renderDetail(ev){
     if(pv==null)h+='<div class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</div>";
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    h+='<div class="stats"><div class="stat"><b>'+(I.days/7).toFixed(1)+'</b><span>weeks</span></div><div class="stat"><b>'+wk+'</b><span>weekends</span></div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span>hours</span></div></div>";
+    h+='<div class="stats"><div class="stat"><b>'+(I.days>=7?Math.floor(I.days/7):I.days)+'</b><span>'+(I.days>=7?(I.days<14?"week":"weeks")+(I.days%7?", "+I.days%7+(I.days%7===1?" day":" days"):" exactly"):(I.days===1?"day":"days"))+'</span></div><div class="stat"><b>'+wk+'</b><span>weekends</span></div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span>hours</span></div></div>";
     const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
     if(ahead.length){
       h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
         return"<div><b>"+(m===10?"Final ten begin":m+" days to go")+"</b><span>"+nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+"</span></div>"}).join("")+"</div></div>"}
-    if(ev.createdAt&&pv==null&&real.t>ev.createdAt){const pct=Math.max(0,Math.min(100,Math.round((now-ev.createdAt)/(real.t-ev.createdAt)*100)));
-      h+='<div class="sec"><h3>The wait so far</h3><div class="bar"><i style="width:'+pct+'%"></i></div><div class="small">'+pct+"% of the wait is behind you.</div></div>"}
+  }
+  if(I.state!=="past"){
+    const todo=Array.isArray(ev.todo)?ev.todo:[],dn=todo.filter(t=>t.done).length;
+    h+='<div class="sec"><h3>Before the day: your shared list</h3><div class="todo">'+todo.map(t=>'<div class="ti'+(t.done?" done":"")+'"><button type="button" class="tk" data-tk="'+esc(t.id)+'" aria-label="Tick off">'+(t.done?"✓":"")+"</button><span>"+esc(t.text)+"</span>"+avatar(t.by,"sm")+'<button type="button" class="tx" data-tx="'+esc(t.id)+'" aria-label="Remove">✕</button></div>').join("")+"</div>"
+      +'<form class="tadd" data-tadd><input class="inp" id="t-new" maxlength="80" placeholder="Book the train" aria-label="Add something to do"><button class="bigbtn" type="submit">Add</button></form>'
+      +'<div class="small">'+(todo.length?dn+" of "+todo.length+" done":"Things to sort before the day. Either of you can add to it and tick things off.")+"</div></div>";
   }
   if(ev.note)h+='<div class="sec"><h3>Note</h3><div class="small">'+esc(ev.note)+"</div></div>";
+  if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
   h+="</div>";
-  el.innerHTML=h;el.scrollTop=keep;
+  const typed=($("t-new")||{}).value||"";
+  el.innerHTML=h;el.scrollTop=keep;if(typed&&$("t-new"))$("t-new").value=typed;
 }
 function openDetail(id){const ev=events.find(e=>e.id===id);if(!ev)return;history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
   if(info(ev,new Date()).state==="today"){partied.add(id+lastDay);celebrate(ev);fanfare()}}
@@ -533,14 +599,22 @@ function closeDetail(){openId=null;pv=null;$("detail").hidden=true;$("detail").i
 /* Screens sit in the normal page flow (no fixed overlays), so every button can be scrolled to. */
 let homeY=0,wasOpen=false;
 function lock(){
-  const sheetOpen=!$("manage").hidden||!$("editor").hidden||!$("gate").hidden,open=!!openId||sheetOpen;
+  const sheetOpen=!$("manage").hidden||!$("editor").hidden||!$("gate").hidden||!$("profile").hidden,open=!!openId||sheetOpen;
   if(open&&!wasOpen)homeY=window.scrollY;
   $("app").hidden=open;$("detail").hidden=!openId||sheetOpen;
   window.scrollTo(0,open?0:homeY);wasOpen=open;
 }
 
+async function saveTodo(ev,todo){try{await save(ev.id,Object.assign({},ev,{todo}))}catch(e){status("That change did not save. Check your connection and try again.")}}
+$("detail").addEventListener("submit",e=>{
+  e.preventDefault();const ev=events.find(x=>x.id===openId),inp=$("t-new");if(!ev||!inp)return;
+  const text=inp.value.trim();if(!text)return;inp.value="";
+  saveTodo(ev,(ev.todo||[]).concat([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),text,done:false,by:me}]));
+});
 $("detail").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const ev=events.find(x=>x.id===openId);if(!ev)return;
+  if(b.dataset.tk){saveTodo(ev,(ev.todo||[]).map(t=>t.id===b.dataset.tk?Object.assign({},t,{done:!t.done}):t));return}
+  if(b.dataset.tx){saveTodo(ev,(ev.todo||[]).filter(t=>t.id!==b.dataset.tx));return}
   if(b.hasAttribute("data-dclose"))history.back();
   else if(b.hasAttribute("data-dedit"))openEditor(ev);
   else if(b.hasAttribute("data-party")){celebrate(ev);fanfare()}
@@ -560,7 +634,8 @@ function closeEditor(){$("editor").hidden=true;if(back==="manage")$("manage").hi
 /* ---------- manage + editor ---------- */
 $("open-manage").addEventListener("click",()=>{history.pushState({oc:1},"");$("manage").hidden=false;lock()});
 window.addEventListener("popstate",()=>{
-  if(!$("editor").hidden)closeEditor();
+  if(!$("profile").hidden)closeProfile();
+  else if(!$("editor").hidden)closeEditor();
   else if(!$("manage").hidden){$("manage").hidden=true;lock()}
   else if(openId)closeDetail();
 });
@@ -586,6 +661,11 @@ function syncForm(){
   $("f-icons").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.icon===(draft.icon||"")));
   $("f-colors").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.color===draft.color));
   $("f-transport").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tr===(draft.transport||"")));
+  const tt=$("f-title").value.trim().toLowerCase();let sg="";
+  if(tt.length>=3)for(const[k,re]of KW)if(re.test(tt)){sg=SCENE_COLOR[k];break}
+  draft.sugg=sg;const showSg=!!sg&&sg!==draft.color&&draft.noSugg!==sg;
+  $("f-sugg").hidden=!showSg;
+  if(showSg){$("f-sugg-dot").style.setProperty("--c",COLORS.find(x=>x.id===sg).bg);$("f-sugg-text").textContent="Suggested colour: "+sg.charAt(0).toUpperCase()+sg.slice(1)+". Or pick any colour below."}
   const c=colorOf(draft),p=$("f-preview");p.style.setProperty("--c",c.bg);p.style.setProperty("--ink",c.ink);
   $("f-pz").innerHTML=posterHTML({title:$("f-title").value,icon:draft.icon,transport:draft.transport,scene:$("f-scene").value},false);p.lastElementChild.textContent=$("f-title").value.trim()||"Your countdown";
 }
@@ -609,7 +689,9 @@ $("f-mode-day").addEventListener("click",()=>{draft.mode="day";syncForm()});
 $("f-mode-month").addEventListener("click",()=>{draft.mode="month";syncForm()});
 $("f-icons").addEventListener("click",e=>{const b=e.target.closest("button");if(b){draft.icon=b.dataset.icon;syncForm()}});
 $("f-colors").addEventListener("click",e=>{const b=e.target.closest("button");if(b){draft.color=b.dataset.color;syncForm()}});
-$("f-title").addEventListener("input",syncForm);$("f-scene").addEventListener("change",syncForm);
+$("f-title").addEventListener("input",syncForm);
+$("f-sugg-yes").addEventListener("click",()=>{draft.color=draft.sugg;syncForm()});
+$("f-sugg-no").addEventListener("click",()=>{draft.noSugg=draft.sugg;syncForm()});$("f-scene").addEventListener("change",syncForm);
 function fail(msg){$("f-err").textContent=msg;$("f-err").hidden=false}
 $("form").addEventListener("submit",async e=>{
   e.preventDefault();
@@ -618,7 +700,7 @@ $("form").addEventListener("submit",async e=>{
   if(draft.mode==="day"){const v=$("f-date").value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return fail("Pick the date, or choose No, just the month.");[y,m,d]=v.split("-").map(Number)}
   else{y=+$("f-year").value;m=+$("f-month").value}
   const old=editing&&events.find(x=>x.id===editing);
-  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now()};
+  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
   $("f-save").disabled=true;$("f-save").textContent="Saving";
   try{await save(editing,body);history.back()}
   catch(err){fail("That did not save. Check your connection and try again.");$("f-save").disabled=false;$("f-save").textContent="Save"}
@@ -640,14 +722,24 @@ async function api(method,path,body){
   if(!r.ok)throw{code:"http"};
   return r.json();
 }
-function setEvents(list){
-  loaded=true;const j=JSON.stringify(list);
+function setEvents(list,pf){
+  loaded=true;
+  if(pf){const m={};pf.forEach(p=>{if(p&&p.id)m[p.id]={name:String(p.name||"").slice(0,24),photo:okPhoto(p.photo)}});profiles=m;try{localStorage.setItem("oc.pf",JSON.stringify(m))}catch(e){}}
+  const j=JSON.stringify([list,profiles]);
   if(j===lastJSON){if($("wall").querySelector(".empty"))render();return}
   lastJSON=j;events=list;writeCache();render();
 }
-async function sync(){
+let rev="",askedMe=false;
+function maybeAskMe(){
+  if(me||askedMe||openId||!$("gate").hidden||!$("manage").hidden||!$("editor").hidden)return;
+  askedMe=true;openProfile();
+}
+async function sync(full){
   if(syncing||!pass)return;syncing=true;
-  try{const d=await api("GET","events");status("");setEvents(d.events||[])}
+  try{
+    if(!full&&rev){const r=await api("GET","rev");if(r.rev===rev){status("");syncing=false;return}}
+    const d=await api("GET","events");rev=d.rev||"";status("");setEvents(d.events||[],d.profiles||[]);maybeAskMe();
+  }
   catch(e){
     if(e.code==="auth"){pass="";showGate(true,"That passcode no longer works. Enter it again.")}
     else{loaded=true;status("Can't reach your saved dates right now. Showing the last copy on this phone.");render()}
@@ -661,6 +753,44 @@ async function save(id,body){
 }
 async function remove(id){await api("DELETE","events/"+id);setEvents(events.filter(e=>e.id!==id))}
 function status(msg){const s=$("status");s.hidden=!msg;s.textContent=msg||""}
+
+/* ---------- profile: name and photo, set once per phone ---------- */
+let pfPhoto="",pfBack=false;
+function drawPf(){$("pf-av").innerHTML=pfPhoto?'<img class="av xl" src="'+pfPhoto+'" alt="">':'<span class="av xl">'+esc(($("pf-name").value.trim().charAt(0)||"?").toUpperCase())+"</span>"}
+function openProfile(){
+  history.pushState({oc:1},"");
+  const p=profiles[me];$("pf-name").value=p?p.name:"";pfPhoto=p?p.photo:"";drawPf();
+  const others=Object.keys(profiles).filter(id=>id!==me);
+  $("pf-pick").hidden=!!me||!others.length;
+  $("pf-list").innerHTML=others.map(id=>'<button type="button" class="row" data-pick="'+esc(id)+'">'+avatar(id,"md")+'<span class="rt"><b>'+esc(profiles[id].name)+'</b><span>This is me</span></span></button>').join("");
+  $("pf-err").hidden=true;$("pf-save").disabled=false;pfBack=!$("manage").hidden;$("manage").hidden=true;$("profile").hidden=false;lock();
+}
+function closeProfile(){$("profile").hidden=true;if(pfBack)$("manage").hidden=false;pfBack=false;lock()}
+function setMe(id){me=id;try{localStorage.setItem("oc.me",id)}catch(e){}lastJSON="";render()}
+$("me-row").addEventListener("click",openProfile);
+$("pf-name").addEventListener("input",()=>{if(!pfPhoto)drawPf()});
+$("pf-list").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(b){setMe(b.dataset.pick);history.back()}});
+$("pf-file").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const img=new Image(),url=URL.createObjectURL(f);
+  img.onload=()=>{
+    const c=document.createElement("canvas");c.width=c.height=192;
+    const sz=Math.min(img.naturalWidth,img.naturalHeight);
+    c.getContext("2d").drawImage(img,(img.naturalWidth-sz)/2,(img.naturalHeight-sz)/2,sz,sz,0,0,192,192);
+    pfPhoto=c.toDataURL("image/jpeg",.82);URL.revokeObjectURL(url);drawPf();
+  };
+  img.onerror=()=>{$("pf-err").textContent="That photo could not be read. Try another one.";$("pf-err").hidden=false};
+  img.src=url;e.target.value="";
+});
+$("pf-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const name=$("pf-name").value.trim(),err=m=>{$("pf-err").textContent=m;$("pf-err").hidden=false};
+  if(!name)return err("Add your name.");
+  const id=me||("p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  $("pf-save").disabled=true;
+  try{await api("PUT","profiles/"+id,{name,photo:pfPhoto});profiles[id]={name,photo:okPhoto(pfPhoto)};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}setMe(id);history.back()}
+  catch(x){err("That did not save. Check your connection and try again.");$("pf-save").disabled=false}
+});
 
 function showGate(claimed,msg){
   gateClaimed=claimed;
@@ -678,7 +808,7 @@ $("gate-form").addEventListener("submit",async e=>{
     if(!gateClaimed)await api("POST","claim",{pass:v});
     pass=v;const d=await api("GET","events");
     try{localStorage.setItem("oc.pass",pass)}catch(x){}
-    $("gate").hidden=true;$("g-pass").value="";lock();status("");setEvents(d.events||[]);
+    $("gate").hidden=true;$("g-pass").value="";lock();status("");rev=d.rev||"";setEvents(d.events||[],d.profiles||[]);maybeAskMe();
   }catch(x){
     pass="";
     if(x.code==="claimed")showGate(true,"A passcode has already been created. Enter it to open.");
@@ -688,25 +818,26 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795266076";
+const BUILD="1795377769";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
     let tried="";try{tried=sessionStorage.getItem("oc.tried")||""}catch(e){}
-    if(v&&v!==BUILD&&(force||tried!==v)&&$("editor").hidden){try{sessionStorage.setItem("oc.tried",v)}catch(e){}location.reload()}
+    if(v&&v!==BUILD&&(force||tried!==v)&&$("editor").hidden){try{sessionStorage.setItem("oc.tried",v)}catch(e){}try{await fetch("/",{cache:"reload"})}catch(e){}location.reload()}
   }catch(e){}
 }
 $("reload").addEventListener("click",()=>{$("reload").textContent="Checking";checkUpdate(true).then(()=>setTimeout(()=>location.reload(),600))});
 async function boot(){
   checkUpdate();document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});
-  events=readCache();lastJSON=JSON.stringify(events);loaded=events.length>0;render();
-  if(pass)sync();
+  events=readCache();lastJSON=JSON.stringify([events,profiles]);loaded=events.length>0;render();
+  if(pass)sync(true);
   else{
     try{const st=await api("GET","status");showGate(!!st.claimed)}
     catch(e){showGate(true,"Could not connect. Check your internet and try again.")}
   }
-  setInterval(()=>{if(!document.hidden)sync()},20000);
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)sync()});
+  setInterval(()=>{if(!document.hidden)sync()},6000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)sync(true)});
+  if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
 }
 
 /* ---------- ticking ---------- */
