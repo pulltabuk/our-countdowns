@@ -149,7 +149,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .tl-m b{position:absolute;left:50%;transform:translateX(-50%);font-size:.8125rem;font-weight:800;line-height:1}
 .tl-m.up b{bottom:100%;margin-bottom:3px}.tl-m.dn b{top:100%;margin-top:3px}
 .tl-m.past{opacity:.45}
-.tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 3px var(--c);transform:translate(-50%,-50%)}
+.tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 2.5px var(--ink);transform:translate(-50%,-50%)}
 .tl-ends{display:flex;justify-content:space-between;gap:12px;margin:42px -12px 0;font-size:.875rem;font-weight:700}
 .ahead{display:flex;flex-direction:column;gap:8px}
 .ahead div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
@@ -408,13 +408,13 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="preview" id="f-preview"><span id="f-pz"></span><b>Your countdown</b></div>
     <div class="fld"><label for="f-title">Name</label>
       <input class="inp" id="f-title" maxlength="60" placeholder="Trip To Lisbon" autocomplete="off" autocapitalize="words"></div>
-    <div class="sugg" id="f-sugg" hidden><i id="f-sugg-dot"></i><span id="f-sugg-text"></span><button type="button" class="mini" id="f-sugg-yes">Use it</button><button type="button" class="mini ghost" id="f-sugg-no">No thanks</button></div>
     <div class="fld"><span class="lab">Do you know the exact day?</span>
       <div class="seg"><button type="button" id="f-mode-day" aria-pressed="true">Yes, exact day</button><button type="button" id="f-mode-month" aria-pressed="false">No, just the month</button></div></div>
     <div class="fld" id="f-day-wrap"><label for="f-date">Date</label><input class="inp" id="f-date" type="date"></div>
     <div class="fld" id="f-month-wrap" hidden><label for="f-month">Month and year</label>
       <div class="two"><select class="inp" id="f-month" aria-label="Month"></select><select class="inp" id="f-year" aria-label="Year"></select></div></div>
     <div class="fld"><span class="lab">Pick an icon (or None)</span><div class="icons" id="f-icons"></div></div>
+    <div class="sugg" id="f-sugg" hidden><i id="f-sugg-dot"></i><span id="f-sugg-text"></span><button type="button" class="mini" id="f-sugg-yes">Use it</button><button type="button" class="mini ghost" id="f-sugg-no">No thanks</button></div>
     <div class="fld"><span class="lab">Pick a colour</span><div class="swatches" id="f-colors"></div></div>
     <div class="fld"><label for="f-scene">Poster picture</label>
       <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option></select></div>
@@ -442,7 +442,11 @@ const COLORS=[
  {id:"flame",bg:"#FF5B3A",ink:"#2B0900"},{id:"marigold",bg:"#FFB627",ink:"#2E1B00"},{id:"lime",bg:"#B6E33B",ink:"#1B2A00"},
  {id:"jade",bg:"#1FBF8F",ink:"#00281C"},{id:"sky",bg:"#3FB8FF",ink:"#00243A"},{id:"cobalt",bg:"#2B4BFF",ink:"#FFFFFF"},
  {id:"violet",bg:"#7A3CFF",ink:"#FFFFFF"},{id:"orchid",bg:"#E94BD8",ink:"#33002E"},{id:"rose",bg:"#FF4F87",ink:"#36001A"},
- {id:"ink",bg:"#2A2644",ink:"#FFFFFF"}];
+ {id:"ink",bg:"#2A2644",ink:"#FFFFFF"},
+ {id:"teal",bg:"#0FA3B1",ink:"#00262B"},{id:"forest",bg:"#2E7D4F",ink:"#FFFFFF"},{id:"olive",bg:"#9AAB2E",ink:"#1E2400"},
+ {id:"sand",bg:"#E8C98A",ink:"#3A2A08"},{id:"peach",bg:"#FF9E7A",ink:"#3A1405"},{id:"brick",bg:"#B8402D",ink:"#FFFFFF"},
+ {id:"plum",bg:"#7B2D6B",ink:"#FFFFFF"},{id:"lavender",bg:"#B9A6FF",ink:"#1E1447"},{id:"mint",bg:"#8EE3C2",ink:"#06382A"},
+ {id:"slate",bg:"#5C6B80",ink:"#FFFFFF"}];
 const ICONS=["✈️","🏝️","🏖️","🏔️","🎿","⛺","🚗","🚢","🧳","🌍","🗽","🎡","🎄","🎃","🎁","🎂","🎉","🥂","💍","❤️","👶","🐶","🏡","🔑","🎓","💼","💰","🎸","🎟️","🎬","🍽️","⚽","🏃","🌸","☀️","🍂","❄️","⭐","🌙","🕯️","🚆","🚌"];
 const TRANSPORT=[["","None"],["plane","✈️ Plane"],["train","🚆 Train"],["car","🚗 Car"],["boat","🚢 Boat"],["coach","🚌 Coach"]];
 const TR_ICON={plane:"✈️",train:"🚆",car:"🚗",boat:"🚢",coach:"🚌"};
@@ -747,7 +751,7 @@ function syncForm(){
   if(tt.length>=3)for(const[k,re]of KW)if(re.test(tt)){sg=SCENE_COLOR[k];break}
   draft.sugg=sg;const showSg=!!sg&&sg!==draft.color&&draft.noSugg!==sg;
   $("f-sugg").hidden=!showSg;
-  if(showSg){$("f-sugg-dot").style.setProperty("--c",COLORS.find(x=>x.id===sg).bg);$("f-sugg-text").textContent="Suggested colour: "+sg.charAt(0).toUpperCase()+sg.slice(1)+". Or pick any colour below."}
+  if(showSg){$("f-sugg-dot").style.setProperty("--c",COLORS.find(x=>x.id===sg).bg);$("f-sugg-text").textContent="Suggested colour for this name: "+sg.charAt(0).toUpperCase()+sg.slice(1)+". Or pick any colour below."}
   const c=colorOf(draft),p=$("f-preview");p.style.setProperty("--c",c.bg);p.style.setProperty("--ink",c.ink);
   $("f-pz").innerHTML=posterHTML({title:$("f-title").value,icon:draft.icon,transport:draft.transport,scene:$("f-scene").value},false);p.lastElementChild.textContent=$("f-title").value.trim()||"Your countdown";
 }
@@ -957,7 +961,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795382624";
+const BUILD="1795382928";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
