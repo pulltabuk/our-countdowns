@@ -99,7 +99,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .lrow .wm{position:static;z-index:auto;flex:none;align-self:center;margin-left:16px;width:60px;height:60px;font-size:2.1rem}
 .lrow .body{flex:1;justify-content:center;padding:16px 14px;gap:6px}
 .lrow .tag{align-self:flex-start;white-space:normal}
-.vi{font-size:.8em}
+.pi{width:1.25em;height:1.25em;vertical-align:-.28em;display:inline-block}
 .vis{display:inline-block;align-self:flex-start;font-size:.875rem;font-weight:700;border-radius:999px;padding:7px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;margin-top:4px}
 .detail .when{font-weight:700;font-size:1.0625rem;opacity:1}
 .lrow .ttl{font-size:1.25rem;overflow-wrap:break-word;hyphens:auto}
@@ -141,6 +141,15 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .ft b{aspect-ratio:1;display:grid;place-items:center;border-radius:9px;font-family:var(--display);font-weight:800;font-size:1rem;box-shadow:0 0 0 1.5px var(--ink) inset}
 .ft b.gone{opacity:.3;text-decoration:line-through}
 .ft b.now{background:var(--ink);color:var(--c);transform:scale(1.12)}
+.tl{padding:26px 12px 0}
+.tl-track{position:relative;height:12px;border-radius:99px;box-shadow:0 0 0 1.5px var(--ink) inset}
+.tl-fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--ink);display:block}
+.tl-m{position:absolute;top:50%;width:2px;height:26px;background:var(--ink);transform:translate(-50%,-50%)}
+.tl-m b{position:absolute;left:50%;transform:translateX(-50%);font-size:.8125rem;font-weight:800;line-height:1}
+.tl-m.up b{bottom:100%;margin-bottom:3px}.tl-m.dn b{top:100%;margin-top:3px}
+.tl-m.past{opacity:.45}
+.tl-now{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:var(--c);box-shadow:0 0 0 4px var(--ink);transform:translate(-50%,-50%)}
+.tl-ends{display:flex;justify-content:space-between;gap:12px;margin:26px -12px 0;font-size:.875rem;font-weight:700}
 .ahead{display:flex;flex-direction:column;gap:8px}
 .ahead div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
 .ahead b{font-family:var(--display);font-size:1.15rem;white-space:nowrap}
@@ -335,7 +344,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   </header>
   <div class="status" id="status" hidden></div>
   <div class="tools" id="tools" hidden>
-    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest first</option><option value="far">Furthest away first</option><option value="az">A to Z</option></select></label>
+    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option></select></label>
     <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option></select></label>
   </div>
   <main class="wall" id="wall" aria-live="polite"></main>
@@ -407,7 +416,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option></select></div>
     <div class="fld"><span class="lab">How are you getting there?</span><div class="tr" id="f-transport"></div></div>
     <div class="fld"><span class="lab">Who can see this?</span>
-      <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">👥 Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">👤 Only me</button></div>
+      <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">Only me</button></div>
       <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
     <label class="check" for="f-repeat"><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
@@ -552,14 +561,15 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span class="vi" title="Only you can see this">👤</span> ':"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
 }
 
+const PRIV='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Private: only you can see this"><circle cx="10" cy="10" r="10" fill="#000"/><circle cx="10" cy="7.4" r="3.3" fill="#fff"/><path d="M3.9 16.6c.8-3.3 3.2-4.8 6.1-4.8s5.3 1.5 6.1 4.8z" fill="#fff"/></svg>';
 let view={sort:"soon",show:"all"};
-try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine"].includes(v.show))view.show=v.show}catch(e){}
+try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine"].includes(v.show))view.show=v.show}catch(e){}
 $("sort").value=view.sort;$("show").value=view.show;
 ["sort","show"].forEach(k=>$(k).addEventListener("change",e=>{view[k]=e.target.value;try{localStorage.setItem("oc.view",JSON.stringify(view))}catch(x){}render()}));
 function sorted(){
@@ -582,7 +592,7 @@ function render(){
   }else{
     let list=view.show==="shared"?act.filter(a=>!a.ev.priv):view.show==="mine"?act.filter(a=>a.ev.priv):act;
     if(view.sort==="far")list=list.slice().reverse();
-    else if(view.sort==="az")list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));
+    else if(view.sort==="az"||view.sort==="za"){list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));if(view.sort==="za")list.reverse()}
     wall.innerHTML=list.length?list.map(a=>cardHTML(a.ev,a.ev.important?"lrow big":"lrow")).join("")
       :'<div class="empty"><b>Nothing to show here</b><p>'+(view.show==="mine"?"You have no private events. Choose Everything to see the shared ones.":"Every event is private. Choose Everything to see them.")+"</p></div>";
   }
@@ -616,7 +626,7 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span title="Only you can see this">👤</span> ':"")+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -625,6 +635,19 @@ function renderDetail(ev){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
+    if(ev.createdAt){
+      const DAY=864e5,tEnd=real.t.getTime();let t0=sod(new Date(ev.createdAt)).getTime();
+      if(ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
+      const span=tEnd-t0;
+      if(span>=2*DAY){
+        const pc=Math.max(0,Math.min(100,(sod(now).getTime()-t0)/span*100)),fmt=d=>new Date(d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+        let k=0,lastX=-99;const marks=[300,200,100,75,50,25,10].map(m=>({m,x:(tEnd-m*DAY-t0)/span*100})).filter(o=>o.x>2&&o.x<99).filter(o=>{if(o.x-lastX<7)return false;lastX=o.x;return true})
+          .map(o=>'<span class="tl-m '+(k++%2?"dn":"up")+(o.m>=I.days?" past":"")+'" style="left:'+o.x.toFixed(2)+'%"><b>'+o.m+"</b></span>").join("");
+        h+='<div class="sec"><h3>Timeline</h3><div class="tl"><div class="tl-track"><i class="tl-fill" style="width:'+pc.toFixed(2)+'%"></i>'+marks+'<span class="tl-now" style="left:'+pc.toFixed(2)+'%"></span></div>'
+          +'<div class="tl-ends"><span>'+(ev.repeat&&t0!==sod(new Date(ev.createdAt)).getTime()?"Last time ":"Added ")+fmt(t0)+"</span><span>"+fmt(tEnd)+" "+esc(ev.icon||"")+"</span></div></div>"
+          +'<div class="small">'+Math.round(pc)+"% of the way there. The dot is today"+(marks?"; the numbered marks are the special days (days to go).":".")+"</div></div>";
+      }
+    }
     const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
     if(ahead.length){
       h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
@@ -905,7 +928,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795380753";
+const BUILD="1795381298";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
