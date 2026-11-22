@@ -373,7 +373,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="phead"><h2 id="form-title">New date</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
     <div class="preview" id="f-preview"><span id="f-pz"></span><b>Your countdown</b></div>
     <div class="fld"><label for="f-title">Name</label>
-      <input class="inp" id="f-title" maxlength="60" placeholder="Trip to Lisbon" autocomplete="off"></div>
+      <input class="inp" id="f-title" maxlength="60" placeholder="Trip To Lisbon" autocomplete="off" autocapitalize="words"></div>
     <div class="sugg" id="f-sugg" hidden><i id="f-sugg-dot"></i><span id="f-sugg-text"></span><button type="button" class="mini" id="f-sugg-yes">Use it</button><button type="button" class="mini ghost" id="f-sugg-no">No thanks</button></div>
     <div class="fld"><span class="lab">Do you know the exact day?</span>
       <div class="seg"><button type="button" id="f-mode-day" aria-pressed="true">Yes, exact day</button><button type="button" id="f-mode-month" aria-pressed="false">No, just the month</button></div></div>
@@ -705,7 +705,11 @@ $("f-mode-day").addEventListener("click",()=>{draft.mode="day";syncForm()});
 $("f-mode-month").addEventListener("click",()=>{draft.mode="month";syncForm()});
 $("f-icons").addEventListener("click",e=>{const b=e.target.closest("button");if(b){draft.icon=b.dataset.icon;syncForm()}});
 $("f-colors").addEventListener("click",e=>{const b=e.target.closest("button");if(b){draft.color=b.dataset.color;syncForm()}});
-$("f-title").addEventListener("input",syncForm);
+$("f-title").addEventListener("input",e=>{
+  const el=e.target,v=el.value.replace(/(^|\s)(\p{Ll})/gu,(m,a,b)=>a+b.toUpperCase());
+  if(v!==el.value){const a=el.selectionStart,b=el.selectionEnd;el.value=v;try{el.setSelectionRange(a,b)}catch(x){}}
+  syncForm();
+});
 $("f-sugg-yes").addEventListener("click",()=>{draft.color=draft.sugg;syncForm()});
 $("f-sugg-no").addEventListener("click",()=>{draft.noSugg=draft.sugg;syncForm()});$("f-scene").addEventListener("change",syncForm);
 function fail(msg){$("f-err").textContent=msg;$("f-err").hidden=false}
@@ -842,7 +846,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795379049";
+const BUILD="1795379175";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
