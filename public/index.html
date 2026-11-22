@@ -542,7 +542,7 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when"><span class="vi" title="'+(ev.priv?"Only you":"Both of you")+'">'+(ev.priv?"🔒":"👥")+"</span> "+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span class="vi" title="Only you can see this">🔒</span> ':"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
@@ -597,7 +597,7 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+'</span><span class="vis">'+(ev.priv?"🔒 Private: only you can see this":"👥 Shared: you both see this")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?'<span title="Only you can see this">🔒</span> ':"")+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -886,7 +886,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795380159";
+const BUILD="1795380424";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
