@@ -346,7 +346,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   </header>
   <div class="status" id="status" hidden></div>
   <div class="tools" id="tools" hidden>
-    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option></select></label>
+    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option><option value="new">Recently Created</option></select></label>
     <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option></select></label>
   </div>
   <main class="wall" id="wall" aria-live="polite"></main>
@@ -387,6 +387,8 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="rows" id="manage-rows"></div>
     <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn" type="button" id="invite">Invite your partner</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
     <div class="pass" id="pass-box" hidden></div>
+    <div class="acts"><button class="btn ghost" type="button" id="notif">Turn on notifications</button></div>
+    <p class="hint" id="notif-note">Get a notification on this phone when your partner adds a shared event.</p>
     <p class="hint" id="admin-note"></p>
     <div class="acts"><button class="btn ghost" type="button" id="admin-claim" hidden>Make this phone the administrator</button><button class="btn ghost" type="button" id="chg-open" hidden>Change the passcode</button></div>
     <form id="chg-form" class="fld" hidden novalidate>
@@ -571,7 +573,7 @@ function cardHTML(ev,fmt){
 
 const PRIV='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Private: only you can see this"><circle cx="10" cy="10" r="10" fill="#000"/><circle cx="10" cy="7.4" r="3.3" fill="#fff"/><path d="M3.9 16.6c.8-3.3 3.2-4.8 6.1-4.8s5.3 1.5 6.1 4.8z" fill="#fff"/></svg>';
 let view={sort:"soon",show:"all"};
-try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine"].includes(v.show))view.show=v.show}catch(e){}
+try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za","new"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine"].includes(v.show))view.show=v.show}catch(e){}
 $("sort").value=view.sort;$("show").value=view.show;
 ["sort","show"].forEach(k=>$(k).addEventListener("change",e=>{view[k]=e.target.value;try{localStorage.setItem("oc.view",JSON.stringify(view))}catch(x){}render()}));
 function sorted(){
@@ -594,6 +596,7 @@ function render(){
   }else{
     let list=view.show==="shared"?act.filter(a=>!a.ev.priv):view.show==="mine"?act.filter(a=>a.ev.priv):act;
     if(view.sort==="far")list=list.slice().reverse();
+    else if(view.sort==="new")list=list.slice().sort((a,b)=>(b.ev.createdAt||0)-(a.ev.createdAt||0));
     else if(view.sort==="az"||view.sort==="za"){list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));if(view.sort==="za")list.reverse()}
     wall.innerHTML=list.length?list.map(a=>cardHTML(a.ev,a.ev.important?"lrow big":"lrow")).join("")
       :'<div class="empty"><b>Nothing to show here</b><p>'+(view.show==="mine"?"You have no private events. Choose Everything to see the shared ones.":"Every event is private. Choose Everything to see them.")+"</p></div>";
@@ -628,7 +631,7 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -637,21 +640,20 @@ function renderDetail(ev){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
-    if(ev.createdAt){
-      const DAY=864e5,tEnd=real.t.getTime();let t0=sod(new Date(ev.createdAt)).getTime();
-      if(ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
+    const DAY=864e5,tEnd=real.t.getTime(),addT=ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
+    let t0=addT;if(t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
+    if(t0){
       const span=tEnd-t0;
       if(span>=2*DAY){
         const pc=Math.max(0,Math.min(100,(sod(now).getTime()-t0)/span*100)),fmt=d=>new Date(d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
         let k=0,lastX=-99;const marks=[300,200,100,75,50,25,10].map(m=>({m,x:(tEnd-m*DAY-t0)/span*100})).filter(o=>o.x>2&&o.x<99).filter(o=>{if(o.x-lastX<7)return false;lastX=o.x;return true})
           .map(o=>'<span class="tl-m '+(k++%2?"dn":"up")+(o.m>=I.days?" past":"")+'" style="left:'+o.x.toFixed(2)+'%"><b>'+o.m+"</b></span>").join("");
         h+='<div class="sec"><h3>Timeline</h3><div class="tl"><div class="tl-track"><i class="tl-fill" style="width:'+pc.toFixed(2)+'%"></i>'+marks+'<span class="tl-now" style="left:'+pc.toFixed(2)+'%"></span></div>'
-          +'<div class="tl-ends"><span>'+(ev.repeat&&t0!==sod(new Date(ev.createdAt)).getTime()?"Last time ":"Added ")+fmt(t0)+"</span><span>"+fmt(tEnd)+" "+esc(ev.icon||"")+"</span></div></div>"
+          +'<div class="tl-ends"><span>'+(t0!==addT?"Last time ":"Added ")+fmt(t0)+"</span><span>"+fmt(tEnd)+" "+esc(ev.icon||"")+"</span></div></div>"
           +'<div class="small">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+", "+(pc<10?(Math.round(pc*10)/10):Math.round(pc))+"% of the way there. The dot is today"+(marks?"; the numbered marks are the special days (days to go).":".")+"</div></div>";
       }
     }
-    const startT=ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
-    const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(!ev.repeat&&startT&&o.nd.getTime()>=startT));
+    const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
     if(ahead.length){
       h+='<div class="sec"><h3>Special days</h3><div class="ahead">'+ahead.map(o=>{const st=o.m>I.days?"gone":o.m===I.days?"now":"";
         return'<div class="'+st+'"><b>'+(st==="gone"?"✓ ":"")+(o.m===10?"Final ten begin":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
@@ -863,6 +865,29 @@ $("invite").addEventListener("click",async()=>{
     else{await navigator.clipboard.writeText(url);note("Link copied. Send it to your partner, along with the passcode below.")}
   }catch(e){if(!e||e.name!=="AbortError")note("Send your partner this link: "+url)}
 });
+const pushOK="serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const b64u=k=>{const p=(k+"===".slice((k.length+3)%4)).replace(/-/g,"+").replace(/_/g,"/"),r=atob(p);return Uint8Array.from(r,c=>c.charCodeAt(0))};
+async function pushSub(){try{return pushOK?await (await navigator.serviceWorker.ready).pushManager.getSubscription():null}catch(e){return null}}
+async function drawNotif(){const on=!!(await pushSub())&&Notification.permission==="granted";$("notif").textContent=on?"Turn off notifications":"Turn on notifications";$("notif").dataset.on=on?"1":""}
+$("notif").addEventListener("click",async()=>{
+  const note=m=>{$("notif-note").textContent=m};
+  if(!pushOK)return note("To get notifications on an iPhone, add this app to your home screen first, then open it from there and tap this again.");
+  $("notif").disabled=true;
+  try{
+    if($("notif").dataset.on){const s0=await pushSub();if(s0)await s0.unsubscribe();await api("DELETE","push").catch(()=>{});note("Notifications are off for this phone.")}
+    else{
+      const perm=await Notification.requestPermission();
+      if(perm!=="granted")note("Notifications are blocked for this app. Allow them in your iPhone's Settings, under Notifications, then try again.");
+      else{
+        const key=(await api("GET","push")).key,reg=await navigator.serviceWorker.ready;
+        const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
+        await api("POST","push",{sub:sub.toJSON()});note("Notifications are on. This phone will be told when your partner adds a shared event.");
+      }
+    }
+  }catch(e){note("That did not work. Check your connection and try again.")}
+  $("notif").disabled=false;drawNotif();
+});
+drawNotif();
 $("admin-claim").addEventListener("click",async()=>{
   const key=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,"0")).join("");
   try{await api("POST","admin",{key});adminKey=key;try{localStorage.setItem("oc.admin",key)}catch(x){}isAdmin=true;hasAdmin=true;renderManage()}
@@ -932,7 +957,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795382304";
+const BUILD="1795382624";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;

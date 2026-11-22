@@ -30,3 +30,14 @@ self.addEventListener("fetch", (e) => {
     }),
   );
 });
+
+// A partner added a shared event: show it, and open the app when tapped.
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data.json(); } catch (x) {}
+  e.waitUntil(self.registration.showNotification(d.title || "Our Countdowns", { body: d.body || "", icon: "/icon-180.png", badge: "/icon-180.png" }));
+});
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => (cs.length ? cs[0].focus() : self.clients.openWindow("/"))));
+});

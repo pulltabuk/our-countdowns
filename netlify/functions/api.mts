@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import type { Config, Context } from "@netlify/functions";
+import webpush from "web-push";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 // One blob per date (no read-modify-write), plus one config blob holding the passcode hash.
@@ -115,6 +116,56 @@ export default async (req: Request, context: Context) => {
     return json({ ok: true });
   }
 
+  // Push notifications: each phone that opts in stores its subscription under its own key.
+  const vapid = async () => {
+    let v = (await s.get("vapid", { type: "json" })) as { publicKey: string; privateKey: string } | null;
+    if (!v) {
+      await s.setJSON("vapid", webpush.generateVAPIDKeys(), { onlyIfNew: true });
+      v = (await s.get("vapid", { type: "json" })) as { publicKey: string; privateKey: string };
+    }
+    return v;
+  };
+  if (head === "push") {
+    if (req.method === "GET") return json({ key: (await vapid()).publicKey });
+    if (!keyHash) return json({ error: "key" }, 400);
+    if (req.method === "DELETE") {
+      await s.delete("push/" + keyHash);
+      return json({ ok: true });
+    }
+    if (req.method === "POST") {
+      const b = (await req.json().catch(() => ({}))) as { sub?: { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } } };
+      const endpoint = str(b.sub?.endpoint, 1000);
+      const p256dh = str(b.sub?.keys?.p256dh, 200);
+      const auth = str(b.sub?.keys?.auth, 100);
+      if (!/^https:\/\//.test(endpoint) || !p256dh || !auth) return json({ error: "invalid" }, 400);
+      await s.setJSON("push/" + keyHash, { endpoint, keys: { p256dh, auth } });
+      return json({ ok: true });
+    }
+    return json({ error: "method" }, 405);
+  }
+  const notifyOthers = async (title: string, by: string) => {
+    const keys = await vapid();
+    const who = by ? ((await s.get("pf/" + by, { type: "json" })) as { name?: string } | null)?.name : "";
+    const payload = JSON.stringify({ title: "New countdown", body: (who ? who + " added " : "Added: ") + title });
+    const { blobs } = await s.list({ prefix: "push/" });
+    await Promise.allSettled(
+      blobs.filter((b) => b.key !== "push/" + keyHash).map(async (b) => {
+        const sub = (await s.get(b.key, { type: "json" })) as webpush.PushSubscription | null;
+        if (!sub) return;
+        try {
+          await webpush.sendNotification(sub, payload, {
+            TTL: 86400,
+            vapidDetails: { subject: new URL(req.url).origin, publicKey: keys.publicKey, privateKey: keys.privateKey },
+          });
+        } catch (e) {
+          const code = (e as { statusCode?: number }).statusCode;
+          if (code === 404 || code === 410) await s.delete(b.key);
+          else console.error("push failed", code);
+        }
+      }),
+    );
+  };
+
   if (head !== "events") return json({ error: "not found" }, 404);
 
   if (!id && req.method === "GET") {
@@ -156,6 +207,8 @@ export default async (req: Request, context: Context) => {
     }
     await s.setJSON("ev/" + id, data);
     await bump();
+    // Tell the other phone about a brand-new shared event; never about private ones or edits.
+    if (!prev && !data.priv) context.waitUntil(notifyOthers(String(data.title), String(data.by || "")).catch((e) => console.error("notify", e)));
     return json({ ok: true });
   }
   if (req.method === "DELETE") {
