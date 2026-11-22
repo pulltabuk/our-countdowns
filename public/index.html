@@ -148,10 +148,11 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .tl-m b{position:absolute;left:50%;transform:translateX(-50%);font-size:.8125rem;font-weight:800;line-height:1}
 .tl-m.up b{bottom:100%;margin-bottom:3px}.tl-m.dn b{top:100%;margin-top:3px}
 .tl-m.past{opacity:.45}
-.tl-now{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:var(--c);box-shadow:0 0 0 4px var(--ink);transform:translate(-50%,-50%)}
-.tl-ends{display:flex;justify-content:space-between;gap:12px;margin:26px -12px 0;font-size:.875rem;font-weight:700}
+.tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 3px var(--c);transform:translate(-50%,-50%)}
+.tl-ends{display:flex;justify-content:space-between;gap:12px;margin:42px -12px 0;font-size:.875rem;font-weight:700}
 .ahead{display:flex;flex-direction:column;gap:8px}
 .ahead div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
+.ahead div.gone{opacity:.5}.ahead div.now{background:var(--ink);color:var(--c)}
 .ahead b{font-family:var(--display);font-size:1.15rem;white-space:nowrap}
 
 /* special days */
@@ -645,19 +646,21 @@ function renderDetail(ev){
           .map(o=>'<span class="tl-m '+(k++%2?"dn":"up")+(o.m>=I.days?" past":"")+'" style="left:'+o.x.toFixed(2)+'%"><b>'+o.m+"</b></span>").join("");
         h+='<div class="sec"><h3>Timeline</h3><div class="tl"><div class="tl-track"><i class="tl-fill" style="width:'+pc.toFixed(2)+'%"></i>'+marks+'<span class="tl-now" style="left:'+pc.toFixed(2)+'%"></span></div>'
           +'<div class="tl-ends"><span>'+(ev.repeat&&t0!==sod(new Date(ev.createdAt)).getTime()?"Last time ":"Added ")+fmt(t0)+"</span><span>"+fmt(tEnd)+" "+esc(ev.icon||"")+"</span></div></div>"
-          +'<div class="small">'+Math.round(pc)+"% of the way there. The dot is today"+(marks?"; the numbered marks are the special days (days to go).":".")+"</div></div>";
+          +'<div class="small">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+", "+(pc<10?(Math.round(pc*10)/10):Math.round(pc))+"% of the way there. The dot is today"+(marks?"; the numbered marks are the special days (days to go).":".")+"</div></div>";
       }
     }
-    const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
+    const startT=ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
+    const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(!ev.repeat&&startT&&o.nd.getTime()>=startT));
     if(ahead.length){
-      h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
-        return"<div><b>"+(m===10?"Final ten begin":m+" days to go")+"</b><span>"+nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+"</span></div>"}).join("")+"</div></div>"}
+      h+='<div class="sec"><h3>Special days</h3><div class="ahead">'+ahead.map(o=>{const st=o.m>I.days?"gone":o.m===I.days?"now":"";
+        return'<div class="'+st+'"><b>'+(st==="gone"?"✓ ":"")+(o.m===10?"Final ten begin":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
+        +(ahead.some(o=>o.m>I.days)?'<div class="small">Ticked days have already been reached.</div>':"")+"</div>"}
   }
   if(I.state!=="past"){
     const todo=Array.isArray(ev.todo)?ev.todo:[],dn=todo.filter(t=>t.done).length;
-    h+='<div class="sec"><h3>Before the day: your shared list</h3><div class="todo">'+todo.map(t=>'<div class="ti'+(t.done?" done":"")+'"><button type="button" class="tk" data-tk="'+esc(t.id)+'" aria-label="Tick off">'+(t.done?"✓":"")+"</button><span>"+esc(t.text)+"</span>"+avatar(t.by,"sm")+'<button type="button" class="tx" data-tx="'+esc(t.id)+'" aria-label="Remove">✕</button></div>').join("")+"</div>"
+    h+='<div class="sec"><h3>Things to remember and do</h3><div class="todo">'+todo.map(t=>'<div class="ti'+(t.done?" done":"")+'"><button type="button" class="tk" data-tk="'+esc(t.id)+'" aria-label="Tick off">'+(t.done?"✓":"")+"</button><span>"+esc(t.text)+"</span>"+avatar(t.by,"sm")+'<button type="button" class="tx" data-tx="'+esc(t.id)+'" aria-label="Remove">✕</button></div>').join("")+"</div>"
       +'<form class="tadd" data-tadd><input class="inp" id="t-new" maxlength="80" placeholder="Book the train" aria-label="Add something to do"><button class="bigbtn" type="submit">Add</button></form>'
-      +'<div class="small">'+(todo.length?dn+" of "+todo.length+" done":"Things to sort before the day. Either of you can add to it and tick things off.")+"</div></div>";
+      +'<div class="small">'+(todo.length?dn+" of "+todo.length+" done":(ev.priv?"Jot down anything to remember or do before the day.":"Jot down anything to remember or do before the day. Either of you can add to it and tick things off."))+"</div></div>";
   }
   if(ev.note)h+='<div class="sec"><h3>Note</h3><div class="small">'+esc(ev.note)+"</div></div>";
   if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
@@ -928,7 +931,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795381298";
+const BUILD="1795381716";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
