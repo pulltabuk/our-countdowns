@@ -116,6 +116,35 @@ export default async (req: Request, context: Context) => {
     return json({ ok: true });
   }
 
+  // UK bank holidays come from the government's published list, cached here for a week at a time.
+  if (head === "holidays" && req.method === "GET") {
+    const cached = (await s.get("bankhols", { type: "json" })) as { at: number; events: { title: string; date: string }[] } | null;
+    if (cached && Date.now() - cached.at < 7 * 864e5 && cached.events.length) return json({ events: cached.events });
+    try {
+      const r = await fetch("https://www.gov.uk/bank-holidays.json", { signal: AbortSignal.timeout(8000) });
+      const all = (await r.json()) as Record<string, { events?: { title?: unknown; date?: unknown }[] }>;
+      const events = (all["england-and-wales"]?.events || [])
+        .map((e) => ({ title: str(e.title, 60), date: str(e.date, 10) }))
+        .filter((e) => e.title && /^\d{4}-\d{2}-\d{2}$/.test(e.date));
+      if (!events.length) throw new Error("empty");
+      await s.setJSON("bankhols", { at: Date.now(), events });
+      return json({ events });
+    } catch {
+      return json({ events: cached?.events || [] });
+    }
+  }
+
+  // Automatic dates (bank holidays and the like) cannot be renamed or moved, but their look and list can be changed.
+  if (head === "auto" && req.method === "PUT") {
+    if (!id || !/^[a-z0-9-]{1,60}$/.test(id)) return json({ error: "bad id" }, 400);
+    const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const full = clean({ ...b, title: "x", y: 2000, m: 1, d: 1 });
+    if (!full) return json({ error: "invalid" }, 400);
+    await s.setJSON("ao/" + id, { color: full.color, icon: full.icon, scene: full.scene, important: full.important, todo: full.todo });
+    await bump();
+    return json({ ok: true });
+  }
+
   // Push notifications: each phone that opts in stores its subscription under its own key.
   const vapid = async () => {
     let v = (await s.get("vapid", { type: "json" })) as { publicKey: string; privateKey: string } | null;
@@ -190,7 +219,15 @@ export default async (req: Request, context: Context) => {
         }),
       )
     ).filter(Boolean);
-    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles, hasAdmin: !!cfg.adminHash, admin: isAdmin });
+    const ao = await s.list({ prefix: "ao/" });
+    const auto: Record<string, unknown> = {};
+    await Promise.all(
+      ao.blobs.map(async (b) => {
+        const data = await s.get(b.key, { type: "json" });
+        if (data) auto[b.key.slice(3)] = data;
+      }),
+    );
+    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles, auto, hasAdmin: !!cfg.adminHash, admin: isAdmin });
   }
 
   if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);

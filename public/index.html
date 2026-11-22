@@ -48,6 +48,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .sq.dark{background:#000;color:#fff;border-color:rgba(255,255,255,.3);font-size:2.2rem;font-weight:500;line-height:1}
 .status{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:.875rem;color:var(--muted)}
 
+form.autoedit [data-own]{display:none!important}
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pick{display:flex;flex-direction:column;gap:6px;min-width:0}
 .pick span{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -204,6 +205,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .av{display:inline-grid;place-items:center;border-radius:50%;background:var(--ink,var(--fg));color:var(--c,var(--bg));font-weight:800;object-fit:cover;flex:none;overflow:hidden;width:44px;height:44px;font-size:1.1rem}
 .av.sm{width:28px;height:28px;font-size:.8rem}.av.lg{width:64px;height:64px;font-size:1.6rem}.av.xl{width:96px;height:96px;font-size:2.4rem}
 .byline{display:flex;align-items:center;gap:14px;border-top:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);padding-top:22px}
+.autob .pi{width:64px;height:64px;vertical-align:0}
 .byline b{display:block;font-family:var(--display);font-size:1.2rem}.byline span{font-size:.875rem;opacity:.85}
 .pfrow{display:flex;align-items:center;gap:16px}
 .merow{display:flex;align-items:center;gap:14px;background:var(--field);border-radius:20px;padding:14px 16px;width:100%}
@@ -346,7 +348,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   <div class="status" id="status" hidden></div>
   <div class="tools" id="tools" hidden>
     <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option><option value="new">Recently Created</option></select></label>
-    <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option></select></label>
+    <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option><option value="auto">UK bank holidays and interesting dates</option></select></label>
   </div>
   <main class="wall" id="wall" aria-live="polite"></main>
   <section class="mem" id="mem" hidden>
@@ -405,25 +407,25 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   <form class="panel" id="form" role="dialog" aria-label="Edit date" novalidate>
     <div class="phead"><h2 id="form-title">New date</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
     <div class="preview" id="f-preview"><span id="f-pz"></span><b>Your countdown</b></div>
-    <div class="fld"><label for="f-title">Name</label>
+    <div class="fld" data-own><label for="f-title">Name</label>
       <input class="inp" id="f-title" maxlength="60" placeholder="Trip To Lisbon" autocomplete="off" autocapitalize="words"></div>
-    <div class="fld"><span class="lab">Do you know the exact day?</span>
+    <div class="fld" data-own><span class="lab">Do you know the exact day?</span>
       <div class="seg"><button type="button" id="f-mode-day" aria-pressed="true">Yes, exact day</button><button type="button" id="f-mode-month" aria-pressed="false">No, just the month</button></div></div>
-    <div class="fld" id="f-day-wrap"><label for="f-date">Date</label><input class="inp" id="f-date" type="date"></div>
-    <div class="fld" id="f-month-wrap" hidden><label for="f-month">Month and year</label>
+    <div class="fld" id="f-day-wrap" data-own><label for="f-date">Date</label><input class="inp" id="f-date" type="date"></div>
+    <div class="fld" id="f-month-wrap" hidden data-own><label for="f-month">Month and year</label>
       <div class="two"><select class="inp" id="f-month" aria-label="Month"></select><select class="inp" id="f-year" aria-label="Year"></select></div></div>
     <div class="fld"><span class="lab">Pick an icon (or None)</span><div class="icons" id="f-icons"></div></div>
     <div class="sugg" id="f-sugg" hidden><i id="f-sugg-dot"></i><span id="f-sugg-text"></span><button type="button" class="mini" id="f-sugg-yes">Use it</button><button type="button" class="mini ghost" id="f-sugg-no">No thanks</button></div>
     <div class="fld"><span class="lab">Pick a colour</span><div class="swatches" id="f-colors"></div></div>
     <div class="fld"><label for="f-scene">Poster picture</label>
       <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option></select></div>
-    <div class="fld"><span class="lab">How are you getting there?</span><div class="tr" id="f-transport"></div></div>
-    <div class="fld"><span class="lab">Who can see this?</span>
+    <div class="fld" data-own><span class="lab">How are you getting there?</span><div class="tr" id="f-transport"></div></div>
+    <div class="fld" data-own><span class="lab">Who can see this?</span>
       <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">Only me</button></div>
       <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
-    <label class="check" for="f-repeat"><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
-    <div class="fld"><label for="f-note">Note (optional)</label><textarea class="inp" id="f-note" rows="2" maxlength="200" placeholder="Flights booked, passports checked"></textarea></div>
+    <label class="check" for="f-repeat" data-own><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
+    <div class="fld" data-own><label for="f-note">Note (optional)</label><textarea class="inp" id="f-note" rows="2" maxlength="200" placeholder="Flights booked, passports checked"></textarea></div>
     <div class="err" id="f-err" hidden></div>
     <div class="acts">
       <button class="btn" type="submit" id="f-save">Save</button>
@@ -568,15 +570,74 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
 }
 
 const PRIV='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Private: only you can see this"><circle cx="10" cy="10" r="10" fill="#000"/><circle cx="10" cy="7.4" r="3.3" fill="#fff"/><path d="M3.9 16.6c.8-3.3 3.2-4.8 6.1-4.8s5.3 1.5 6.1 4.8z" fill="#fff"/></svg>';
+const AUTO='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Added automatically"><circle cx="10" cy="10" r="10" fill="#000"/><rect x="5" y="6" width="10" height="9.2" rx="1.6" fill="#fff"/><path d="M5 9.4h10" stroke="#000" stroke-width="1.2"/><path d="M7.6 4.4v2.6M12.4 4.4v2.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+/* ---------- automatic dates: UK bank holidays (official list) plus interesting dates worked out here ---------- */
+let hol=[],autoOv={},autoEvs=[];
+try{hol=JSON.parse(localStorage.getItem("oc.hol")||"[]")||[];autoOv=JSON.parse(localStorage.getItem("oc.auto")||"{}")||{}}catch(e){}
+const easter=y=>{const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=(h+l-7*m+114)%31+1;return new Date(y,mo-1,da)};
+const addD=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const nthWd=(y,m,wd,n)=>{const f=new Date(y,m,1);return new Date(y,m,1+(wd-f.getDay()+7)%7+7*(n-1))};
+const lastWd=(y,m,wd)=>{const l=new Date(y,m+1,0);return new Date(y,m,l.getDate()-(l.getDay()-wd+7)%7)};
+const FUN=[
+ ["burns-night","Burns Night","🥃","forest","country",y=>new Date(y,0,25)],
+ ["valentines-day","Valentine's Day","❤️","rose","party",y=>new Date(y,1,14)],
+ ["pancake-day","Pancake Day","🥞","marigold","home",y=>addD(easter(y),-47)],
+ ["st-davids-day","St David's Day","🌼","lime","country",y=>new Date(y,2,1)],
+ ["mothers-day","Mother's Day","💐","orchid","party",y=>addD(easter(y),-21)],
+ ["st-patricks-day","St Patrick's Day","☘️","jade","city",y=>new Date(y,2,17)],
+ ["clocks-go-forward","Clocks Go Forward","⏰","sky","country",y=>lastWd(y,2,0)],
+ ["easter-sunday","Easter Sunday","🐣","lavender","country",y=>easter(y)],
+ ["st-georges-day","St George's Day","🌹","brick","city",y=>new Date(y,3,23)],
+ ["fathers-day","Father's Day","👔","cobalt","party",y=>nthWd(y,5,0,3)],
+ ["halloween","Halloween","🎃","ink","xmas",y=>new Date(y,9,31)],
+ ["clocks-go-back","Clocks Go Back","⏰","slate","country",y=>lastWd(y,9,0)],
+ ["bonfire-night","Bonfire Night","🎆","plum","party",y=>new Date(y,10,5)],
+ ["remembrance-sunday","Remembrance Sunday","🌺","brick","country",y=>nthWd(y,10,0,2)],
+ ["st-andrews-day","St Andrew's Day","🏔️","teal","mountains",y=>new Date(y,10,30)],
+ ["christmas-eve","Christmas Eve","🎄","forest","xmas",y=>new Date(y,11,24)],
+ ["new-years-eve","New Year's Eve","🎉","violet","party",y=>new Date(y,11,31)]];
+function bankLook(t){t=t.toLowerCase();
+  return/new year/.test(t)?{icon:"🎉",color:"violet",scene:"party"}:/good friday/.test(t)?{icon:"🐣",color:"lavender",scene:"country"}:/easter/.test(t)?{icon:"🐰",color:"mint",scene:"country"}
+   :/early may/.test(t)?{icon:"🌸",color:"lime",scene:"country"}:/spring/.test(t)?{icon:"🌼",color:"jade",scene:"country"}:/summer/.test(t)?{icon:"☀️",color:"marigold",scene:"beach"}
+   :/christmas/.test(t)?{icon:"🎄",color:"flame",scene:"xmas"}:/boxing/.test(t)?{icon:"🎁",color:"teal",scene:"xmas"}:{icon:"⭐",color:"cobalt",scene:"city"}}
+/* used only if the official list cannot be fetched */
+function bankFallback(y0){const out=[],iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"),sub=(d,sat,sun)=>d.getDay()===6?addD(d,sat):d.getDay()===0?addD(d,sun):d;
+  for(let y=y0-1;y<=y0+1;y++){const e=easter(y),ny=new Date(y,0,1),x=new Date(y,11,25),b=new Date(y,11,26);
+    [["New Year's Day",sub(ny,2,1)],["Good Friday",addD(e,-2)],["Easter Monday",addD(e,1)],["Early May bank holiday",nthWd(y,4,1,1)],["Spring bank holiday",lastWd(y,4,1)],["Summer bank holiday",lastWd(y,7,1)],["Christmas Day",sub(x,2,2)],["Boxing Day",sub(b,2,2)]]
+     .forEach(r=>out.push({title:r[0],date:iso(r[1]),notes:""}))}
+  return out}
+function mkAuto(id,title,d,pv,kind,look){const o=autoOv[id]||{};
+  return{id,auto:true,kind,title,mode:"day",y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate(),icon:"icon" in o?String(o.icon||""):look.icon,color:o.color||look.color,scene:o.scene||look.scene,important:!!o.important,todo:Array.isArray(o.todo)?o.todo:[],prevT:pv.getTime()}}
+function autoList(){
+  const today=sod(new Date()),out=[],by={};
+  (hol.length?hol:bankFallback(today.getFullYear())).forEach(e=>{if(e&&e.title&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||""))(by[e.title]=by[e.title]||[]).push(e)});
+  Object.keys(by).forEach(t=>{
+    const ds=by[t].map(e=>({d:new Date(+e.date.slice(0,4),+e.date.slice(5,7)-1,+e.date.slice(8,10)),sub:/substitute/i.test(e.notes||"")})).sort((a,b)=>a.d-b.d);
+    const nx=ds.find(o=>o.d>=today);if(!nx)return;const pv=ds.filter(o=>o.d<today).pop();
+    out.push(mkAuto("bh-"+t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),t+(nx.sub?" (substitute day)":""),nx.d,pv?pv.d:addD(nx.d,-365),"bank",bankLook(t)))});
+  FUN.forEach(f=>{const y=today.getFullYear();let nx=f[5](y),pv=f[5](y-1);if(nx<today){pv=nx;nx=f[5](y+1)}out.push(mkAuto("x-"+f[0],f[1],nx,pv,"fun",{icon:f[2],color:f[3],scene:f[4]}))});
+  return out;
+}
+const findEv=id=>events.find(e=>e.id===id)||autoEvs.find(e=>e.id===id);
+async function saveAuto(ev,patch){
+  const cur=Object.assign({color:ev.color,icon:ev.icon,scene:ev.scene||"",important:!!ev.important,todo:ev.todo||[]},patch);
+  await api("PUT","auto/"+ev.id,cur);autoOv[ev.id]=cur;try{localStorage.setItem("oc.auto",JSON.stringify(autoOv))}catch(e){}lastJSON="";render();
+}
+let holAsked=false;
+async function loadHol(){
+  if(holAsked||!pass)return;holAsked=true;
+  try{const d=await api("GET","holidays");if(d.events&&d.events.length){hol=d.events;try{localStorage.setItem("oc.hol",JSON.stringify(hol))}catch(e){}lastJSON="";render()}}catch(e){holAsked=false}
+}
 let view={sort:"soon",show:"all"};
-try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za","new"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine"].includes(v.show))view.show=v.show}catch(e){}
+try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za","new"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine","auto"].includes(v.show))view.show=v.show}catch(e){}
 $("sort").value=view.sort;$("show").value=view.show;
 ["sort","show"].forEach(k=>$(k).addEventListener("change",e=>{view[k]=e.target.value;try{localStorage.setItem("oc.view",JSON.stringify(view))}catch(x){}render()}));
 function sorted(){
@@ -591,15 +652,16 @@ function render(){
   const now=new Date();lastDay=dayKey(now);
   $("today-line").textContent=now.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
   const{act,past}=sorted(),wall=$("wall");
-  $("tools").hidden=!act.length;
-  if(!act.length){
+  autoEvs=autoList();
+  $("tools").hidden=!loaded&&!act.length;
+  if(!act.length&&view.show!=="auto"){
     wall.innerHTML=!loaded
       ?'<div class="empty"><b>Fetching your dates</b><p>Your countdowns will appear here in a moment.</p></div>'
       :'<div class="empty"><b>Nothing to count down to yet</b><p>Add a trip, a birthday or a big day and it becomes a poster here, counting down for both of you.</p>'+(canWrite?'<button class="btn" type="button" data-add>Add your first date</button>':"")+"</div>";
   }else{
-    let list=view.show==="shared"?act.filter(a=>!a.ev.priv):view.show==="mine"?act.filter(a=>a.ev.priv):act;
+    let list=view.show==="auto"?autoEvs.map(ev=>({ev,I:info(ev,now)})).sort((a,b)=>a.I.days-b.I.days):view.show==="shared"?act.filter(a=>!a.ev.priv):view.show==="mine"?act.filter(a=>a.ev.priv):act;
     if(view.sort==="far")list=list.slice().reverse();
-    else if(view.sort==="new")list=list.slice().sort((a,b)=>(b.ev.createdAt||0)-(a.ev.createdAt||0));
+    else if(view.sort==="new"&&view.show!=="auto")list=list.slice().sort((a,b)=>(b.ev.createdAt||0)-(a.ev.createdAt||0));
     else if(view.sort==="az"||view.sort==="za"){list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));if(view.sort==="za")list.reverse()}
     wall.innerHTML=list.length?list.map(a=>cardHTML(a.ev,a.ev.important?"lrow big":"lrow")).join("")
       :'<div class="empty"><b>Nothing to show here</b><p>'+(view.show==="mine"?"You have no private events. Choose Everything to see the shared ones.":"Every event is private. Choose Everything to see them.")+"</p></div>";
@@ -608,7 +670,7 @@ function render(){
   $("mem-rows").innerHTML=past.map(a=>rowHTML(a.ev,(-a.I.days)+(a.I.days===-1?" day ago":" days ago"),canWrite?"Edit":"")).join("");
   $("quick-add").hidden=!canWrite;
   renderManage();
-  if(openId){const ev=events.find(e=>e.id===openId);if(ev)renderDetail(ev);else closeDetail()}
+  if(openId){const ev=findEv(openId);if(ev)renderDetail(ev);else closeDetail()}
   const first=act.find(a=>a.I.state==="today");
   if(first&&!partied.has(first.ev.id+lastDay)&&!openId){partied.add(first.ev.id+lastDay);setTimeout(()=>celebrate(first.ev),500)}
 }
@@ -634,7 +696,7 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -643,8 +705,8 @@ function renderDetail(ev){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
-    const DAY=864e5,tEnd=real.t.getTime(),addT=ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
-    let t0=addT;if(t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
+    const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
+    let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
     if(t0){
       const span=tEnd-t0;
       if(span>=2*DAY){
@@ -669,13 +731,14 @@ function renderDetail(ev){
       +'<div class="small">'+(todo.length?dn+" of "+todo.length+" done":(ev.priv?"Jot down anything to remember or do before the day.":"Jot down anything to remember or do before the day. Either of you can add to it and tick things off."))+"</div></div>";
   }
   if(ev.note)h+='<div class="sec"><h3>Note</h3><div class="small">'+esc(ev.note)+"</div></div>";
-  if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
+  if(ev.auto)h+='<div class="byline"><span class="autob">'+AUTO+"</span><div><b>Added automatically</b><span>"+(ev.kind==="bank"?"A UK bank holiday, from the government's published list":"An interesting date in the UK calendar")+"</span></div></div>";
+  else if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
   else if(me&&profiles[me]&&!ev.by)h+='<div class="claim"><span>Nobody is recorded as adding this one.</span><button type="button" class="chip" data-claim>I added this</button></div>';
   h+="</div>";
   const typed=($("t-new")||{}).value||"";
   el.innerHTML=h;el.scrollTop=keep;if(typed&&$("t-new"))$("t-new").value=typed;
 }
-function openDetail(id){const ev=events.find(e=>e.id===id);if(!ev)return;history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
+function openDetail(id){const ev=findEv(id);if(!ev)return;history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
   if(info(ev,new Date()).state==="today"){partied.add(id+lastDay);celebrate(ev);fanfare()}}
 function closeDetail(){openId=null;pv=null;$("detail").hidden=true;$("detail").innerHTML="";lock()}
 /* Screens sit in the normal page flow (no fixed overlays), so every button can be scrolled to. */
@@ -685,19 +748,19 @@ function lock(){
   if(open&&!wasOpen)homeY=window.scrollY;
   $("app").hidden=open;$("detail").hidden=!openId||sheetOpen;
   // the event page is one solid colour edge to edge, including behind the phone's status bar
-  const dev=openId&&!sheetOpen?events.find(e=>e.id===openId):null;
+  const dev=openId&&!sheetOpen?findEv(openId):null;
   document.body.style.background=dev?colorOf(dev).bg:"";
   window.scrollTo(0,open?0:homeY);wasOpen=open;
 }
 
-async function saveTodo(ev,todo){try{await save(ev.id,Object.assign({},ev,{todo}))}catch(e){status("That change did not save. Check your connection and try again.")}}
+async function saveTodo(ev,todo){try{if(ev.auto)await saveAuto(ev,{todo});else await save(ev.id,Object.assign({},ev,{todo}))}catch(e){status("That change did not save. Check your connection and try again.")}}
 $("detail").addEventListener("submit",e=>{
-  e.preventDefault();const ev=events.find(x=>x.id===openId),inp=$("t-new");if(!ev||!inp)return;
+  e.preventDefault();const ev=findEv(openId),inp=$("t-new");if(!ev||!inp)return;
   const text=inp.value.trim();if(!text)return;inp.value="";
   saveTodo(ev,(ev.todo||[]).concat([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),text,done:false,by:me}]));
 });
 $("detail").addEventListener("click",e=>{
-  const b=e.target.closest("button");if(!b)return;const ev=events.find(x=>x.id===openId);if(!ev)return;
+  const b=e.target.closest("button");if(!b)return;const ev=findEv(openId);if(!ev)return;
   if(b.hasAttribute("data-claim")){save(ev.id,Object.assign({},ev,{by:me})).catch(()=>{});return}
   if(b.dataset.tk){saveTodo(ev,(ev.todo||[]).map(t=>t.id===b.dataset.tk?Object.assign({},t,{done:!t.done}):t));return}
   if(b.dataset.tx){saveTodo(ev,(ev.todo||[]).filter(t=>t.id!==b.dataset.tx));return}
@@ -751,7 +814,7 @@ function syncForm(){
   $("f-vis-hint").textContent=draft.priv?"Private: it shows only on this phone, and your partner never sees it.":"Shared: you both see it and can both change it.";
   const tt=$("f-title").value.trim().toLowerCase();let sg="";
   if(tt.length>=3)for(const[k,re]of KW)if(re.test(tt)){sg=SCENE_COLOR[k];break}
-  draft.sugg=sg;const showSg=!!sg&&sg!==draft.color&&draft.noSugg!==sg;
+  draft.sugg=sg;const showSg=!draft.auto&&!!sg&&sg!==draft.color&&draft.noSugg!==sg;
   $("f-sugg").hidden=!showSg;
   if(showSg){$("f-sugg-dot").style.setProperty("--c",COLORS.find(x=>x.id===sg).bg);$("f-sugg-text").textContent="Suggested colour for this name: "+sg.charAt(0).toUpperCase()+sg.slice(1)+". Or pick any colour below."}
   const c=colorOf(draft),p=$("f-preview");p.style.setProperty("--c",c.bg);p.style.setProperty("--ink",c.ink);
@@ -761,15 +824,15 @@ function openEditor(ev,from){
   if(!canWrite)return;
   back=from||null;history.pushState({oc:1},"");
   editing=ev?ev.id:null;const now=new Date(),pad=n=>String(n).padStart(2,"0");
-  draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||"",priv:!!ev.priv}:{mode:"day",icon:"⭐",transport:"",priv:false,color:COLORS[events.length%COLORS.length].id};
-  $("form-title").textContent=ev?"Edit date":"New date";
+  draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||"",priv:!!ev.priv,auto:!!ev.auto}:{mode:"day",icon:"⭐",transport:"",priv:false,color:COLORS[events.length%COLORS.length].id};
+  $("form-title").textContent=ev?(ev.auto?"Change how it looks":"Edit date"):"New date";$("form").classList.toggle("autoedit",!!(ev&&ev.auto));
   $("f-title").value=ev?ev.title:"";
   $("f-date").value=ev&&ev.mode!=="month"?ev.y+"-"+pad(ev.m)+"-"+pad(ev.d):"";
   $("f-month").value=ev?ev.m:now.getMonth()+1;
   const ys=$("f-year");if(ev&&!ys.querySelector('option[value="'+ev.y+'"]')){const o=document.createElement("option");o.value=o.textContent=ev.y;ys.insertBefore(o,ys.firstChild)}
   ys.value=ev?ev.y:now.getFullYear();
   $("f-repeat").checked=!!(ev&&ev.repeat);$("f-important").checked=!!(ev&&ev.important);$("f-scene").value=ev&&SCENES.includes(ev.scene)?ev.scene:"auto";$("f-note").value=ev&&ev.note||"";
-  $("f-err").hidden=true;$("f-delete").hidden=!ev;$("f-delete").textContent="Delete";delete $("f-delete").dataset.armed;
+  $("f-err").hidden=true;$("f-delete").hidden=!ev||!!ev.auto;$("f-delete").textContent="Delete";delete $("f-delete").dataset.armed;
   $("f-save").disabled=false;$("f-save").textContent="Save";
   syncForm();$("manage").hidden=true;$("editor").hidden=false;$("editor").firstElementChild.scrollTop=0;lock();
 }
@@ -789,6 +852,12 @@ $("f-sugg-no").addEventListener("click",()=>{draft.noSugg=draft.sugg;syncForm()}
 function fail(msg){$("f-err").textContent=msg;$("f-err").hidden=false}
 $("form").addEventListener("submit",async e=>{
   e.preventDefault();
+  if(draft.auto){
+    const ev=findEv(editing);if(!ev)return;$("f-save").disabled=true;
+    try{await saveAuto(ev,{color:draft.color,icon:draft.icon||"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,important:$("f-important").checked});history.back()}
+    catch(err){fail("That did not save. Check your connection and try again.");$("f-save").disabled=false}
+    return;
+  }
   const title=$("f-title").value.trim();if(!title)return fail("Give it a name so you both know what it is.");
   let y,m,d=1;
   if(draft.mode==="day"){const v=$("f-date").value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return fail("Pick the date, or choose No, just the month.");[y,m,d]=v.split("-").map(Number)}
@@ -818,10 +887,11 @@ async function api(method,path,body){
   if(!r.ok)throw{code:"http"};
   return r.json();
 }
-function setEvents(list,pf){
+function setEvents(list,pf,ao){
+  if(ao&&typeof ao==="object"){autoOv=ao;try{localStorage.setItem("oc.auto",JSON.stringify(ao))}catch(e){}}
   loaded=true;
   if(pf){const m={};pf.forEach(p=>{if(p&&p.id)m[p.id]={name:String(p.name||"").slice(0,24),photo:okPhoto(p.photo)}});profiles=m;try{localStorage.setItem("oc.pf",JSON.stringify(m))}catch(e){}}
-  const j=JSON.stringify([list,profiles]);
+  const j=JSON.stringify([list,profiles,autoOv]);
   if(j===lastJSON){if($("wall").querySelector(".empty"))render();return}
   lastJSON=j;events=list;writeCache();render();
 }
@@ -834,7 +904,7 @@ async function sync(full){
   if(syncing||!pass)return;syncing=true;
   try{
     if(!full&&rev){const r=await api("GET","rev");if(r.rev===rev){status("");syncing=false;return}}
-    const d=await api("GET","events");rev=d.rev||"";status("");setRole(d);setEvents(d.events||[],d.profiles||[]);maybeAskMe();
+    const d=await api("GET","events");rev=d.rev||"";status("");setRole(d);setEvents(d.events||[],d.profiles||[],d.auto);loadHol();maybeAskMe();
   }
   catch(e){
     if(e.code==="auth"){pass="";showGate(true,"That passcode no longer works. Enter it again.")}
@@ -953,7 +1023,7 @@ $("gate-form").addEventListener("submit",async e=>{
     if(!gateClaimed)await api("POST","claim",{pass:v});
     pass=v;const d=await api("GET","events");
     try{localStorage.setItem("oc.pass",pass)}catch(x){}
-    $("gate").hidden=true;$("g-pass").value="";lock();status("");rev=d.rev||"";setRole(d);setEvents(d.events||[],d.profiles||[]);maybeAskMe();
+    $("gate").hidden=true;$("g-pass").value="";lock();status("");rev=d.rev||"";setRole(d);setEvents(d.events||[],d.profiles||[],d.auto);loadHol();maybeAskMe();
   }catch(x){
     pass="";
     if(x.code==="claimed")showGate(true,"A passcode has already been created. Enter it to open.");
@@ -963,7 +1033,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795387333";
+const BUILD="1795388486";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
@@ -974,7 +1044,7 @@ async function checkUpdate(force){
 $("reload").addEventListener("click",()=>{$("reload").textContent="Checking";checkUpdate(true).then(()=>setTimeout(()=>location.reload(),600))});
 async function boot(){
   checkUpdate();document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});
-  events=readCache();lastJSON=JSON.stringify([events,profiles]);loaded=events.length>0;render();
+  events=readCache();lastJSON=JSON.stringify([events,profiles,autoOv]);loaded=events.length>0;render();
   if(pass)sync(true);
   else{
     try{const st=await api("GET","status");showGate(!!st.claimed)}
