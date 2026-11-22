@@ -154,7 +154,18 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .detail .dtop .pz svg{border-radius:8px;box-shadow:0 0 0 4px #FFF1D0,0 4px 0 4px rgba(0,0,0,.18)}
 .detail .dtop .pz em{font-size:2.1rem;right:-14px;bottom:-12px}
 .detail .dtop .pz em.tp{right:auto;left:-14px}
-.dtop .cnt{min-width:0;flex:1}
+.dtop .cnt{min-width:0;flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;padding-left:8px}
+.dtop .flap{gap:5px}
+.dtop .flap b{width:66px;height:104px;font-size:4.5rem;border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.dtop .flap b::after{height:2px}
+.dtop .flap.n3 b{width:52px;height:86px;font-size:3.6rem;border-radius:12px}
+.dtop .flap.n4 b{width:40px;height:68px;font-size:2.7rem;border-radius:10px}
+.dtop .flap b.w{width:auto;height:76px;padding:0 16px;font-size:2rem}
+.detail .dtop .unit{margin-top:0}
+.stat span.wk{font-size:1rem;font-weight:700;letter-spacing:0;text-transform:none;opacity:1;line-height:1.2}
+.claim{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);padding-top:22px;font-weight:600}
+.claim span{flex:1 1 140px}
+.pass{font-family:ui-monospace,Menlo,monospace;font-size:1.25rem;font-weight:700;background:var(--field);border-radius:16px;padding:16px;text-align:center;overflow-wrap:anywhere;user-select:all;-webkit-user-select:all}
 .detail .dtop .num{font-size:clamp(5.6rem,31vw,9rem)}
 .detail .dtop .num.n3{font-size:clamp(4.2rem,23vw,7rem)}
 .detail .dtop .num.n4{font-size:clamp(3.2rem,17vw,5.4rem)}
@@ -349,7 +360,8 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="acts"><button class="btn" type="button" id="manage-add">+ Add a date</button></div>
     <p class="hint">Your dates. Tap one to change or delete it.</p>
     <div class="rows" id="manage-rows"></div>
-    <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
+    <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
+    <div class="pass" id="pass-box" hidden></div>
   </div>
 </div>
 
@@ -567,7 +579,7 @@ function renderDetail(ev){
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
   h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · going by "+ev.transport:"")+"</span></div>";
-  h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="num'+(w.word?" word":" n"+w.num.length)+'">'+esc(w.num)+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
+  h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
   if(I.state==="final")h+=finalTrack(I.days);
@@ -575,7 +587,7 @@ function renderDetail(ev){
     if(pv==null)h+='<div class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</div>";
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    h+='<div class="stats"><div class="stat"><b>'+(I.days>=7?Math.floor(I.days/7):I.days)+'</b><span>'+(I.days>=7?(I.days<14?"week":"weeks")+(I.days%7?", "+I.days%7+(I.days%7===1?" day":" days"):" exactly"):(I.days===1?"day":"days"))+'</span></div><div class="stat"><b>'+wk+'</b><span>weekends</span></div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span>hours</span></div></div>";
+    h+='<div class="stats"><div class="stat"><b>'+(I.days>=7?Math.floor(I.days/7):I.days)+'</b><span class="wk">'+(I.days>=7?(I.days<14?"week":"weeks")+(I.days%7?", "+I.days%7+(I.days%7===1?" day":" days"):" exactly"):(I.days===1?"day":"days"))+'</span></div><div class="stat"><b>'+wk+'</b><span>weekends</span></div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span>hours</span></div></div>";
     const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
     if(ahead.length){
       h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
@@ -589,6 +601,7 @@ function renderDetail(ev){
   }
   if(ev.note)h+='<div class="sec"><h3>Note</h3><div class="small">'+esc(ev.note)+"</div></div>";
   if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
+  else if(me&&profiles[me]&&!ev.by)h+='<div class="claim"><span>Nobody is recorded as adding this one.</span><button type="button" class="chip" data-claim>I added this</button></div>';
   h+="</div>";
   const typed=($("t-new")||{}).value||"";
   el.innerHTML=h;el.scrollTop=keep;if(typed&&$("t-new"))$("t-new").value=typed;
@@ -613,6 +626,7 @@ $("detail").addEventListener("submit",e=>{
 });
 $("detail").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const ev=events.find(x=>x.id===openId);if(!ev)return;
+  if(b.hasAttribute("data-claim")){save(ev.id,Object.assign({},ev,{by:me})).catch(()=>{});return}
   if(b.dataset.tk){saveTodo(ev,(ev.todo||[]).map(t=>t.id===b.dataset.tk?Object.assign({},t,{done:!t.done}):t));return}
   if(b.dataset.tx){saveTodo(ev,(ev.todo||[]).filter(t=>t.id!==b.dataset.tx));return}
   if(b.hasAttribute("data-dclose"))history.back();
@@ -768,6 +782,7 @@ function openProfile(){
 function closeProfile(){$("profile").hidden=true;if(pfBack)$("manage").hidden=false;pfBack=false;lock()}
 function setMe(id){me=id;try{localStorage.setItem("oc.me",id)}catch(e){}lastJSON="";render()}
 $("me-row").addEventListener("click",openProfile);
+$("show-pass").addEventListener("click",()=>{const b=$("pass-box");b.hidden=!b.hidden;b.textContent=pass||"Not saved on this phone";$("show-pass").textContent=b.hidden?"Show the passcode":"Hide the passcode"});
 $("pf-name").addEventListener("input",()=>{if(!pfPhoto)drawPf()});
 $("pf-list").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(b){setMe(b.dataset.pick);history.back()}});
 $("pf-file").addEventListener("change",e=>{
@@ -818,7 +833,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795377769";
+const BUILD="1795378408";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
