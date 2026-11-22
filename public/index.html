@@ -144,7 +144,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .tl{padding:26px 12px 0}
 .tl-track{position:relative;height:12px;border-radius:99px;box-shadow:0 0 0 1.5px var(--ink) inset}
 .tl-fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--ink);display:block}
-.tl-m{position:absolute;top:50%;width:2px;height:26px;background:var(--ink);transform:translate(-50%,-50%)}
+.tl-m{position:absolute;width:2px;height:19px;background:var(--ink);transform:translateX(-50%)}
+.tl-m.up{bottom:0}.tl-m.dn{top:0}
 .tl-m b{position:absolute;left:50%;transform:translateX(-50%);font-size:.8125rem;font-weight:800;line-height:1}
 .tl-m.up b{bottom:100%;margin-bottom:3px}.tl-m.dn b{top:100%;margin-top:3px}
 .tl-m.past{opacity:.45}
@@ -931,7 +932,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795381716";
+const BUILD="1795382304";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
