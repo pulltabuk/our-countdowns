@@ -160,7 +160,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .s-milestone::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.6) 50%,transparent 64%);transform:translateX(-130%);animation:sweep 3s ease-in-out 1}
 .card.s-milestone::before,.card.s-final::before{content:"";position:absolute;inset:0;border-radius:inherit;border:4px solid rgba(255,255,255,.75);opacity:0;pointer-events:none;animation:ring 1.5s ease-in-out 2;will-change:opacity}
 .s-milestone .pz,.s-final .pz,.s-today .pz{animation:wobble 1.5s ease-in-out 2}
-.s-today{background-image:linear-gradient(115deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.5) 40%,rgba(255,255,255,0) 60%,rgba(255,255,255,.35) 80%,rgba(255,255,255,0));background-size:260% 100%;animation:party 3.2s linear infinite}
+.card.s-today{background-image:linear-gradient(115deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.5) 40%,rgba(255,255,255,0) 60%,rgba(255,255,255,.35) 80%,rgba(255,255,255,0));background-size:260% 100%;animation:party 3.2s linear infinite}
 .s-today .bigico{animation:hop 1s cubic-bezier(.3,1.6,.6,1) infinite alternate}
 .stamp{position:absolute;top:12px;right:12px;width:98px;height:98px;color:var(--ink)}
 .stamp .spin{transform-origin:60px 60px;animation:spin 16s linear infinite}
@@ -244,8 +244,7 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 
 
 /* detail */
-.detail{min-height:100vh;background:var(--c);color:var(--ink);
-  background-image:radial-gradient(110% 60% at 0% 0%,rgba(255,255,255,.3),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(0,0,0,.18),transparent 60%)}
+.detail{min-height:100vh;background:var(--c);color:var(--ink)}
 .dwrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:30px;animation:rise .35s ease-out;
   padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 .dbar{display:flex;justify-content:space-between;gap:10px}
@@ -660,7 +659,7 @@ function renderDetail(ev){
     const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
     if(ahead.length){
       h+='<div class="sec"><h3>Special days</h3><div class="ahead">'+ahead.map(o=>{const st=o.m>I.days?"gone":o.m===I.days?"now":"";
-        return'<div class="'+st+'"><b>'+(st==="gone"?"✓ ":"")+(o.m===10?"Final ten begin":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
+        return'<div class="'+st+'"><b>'+(st==="gone"?"✓ ":"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
         +(ahead.some(o=>o.m>I.days)?'<div class="small">Ticked days have already been reached.</div>':"")+"</div>"}
   }
   if(I.state!=="past"){
@@ -685,6 +684,9 @@ function lock(){
   const sheetOpen=!$("manage").hidden||!$("editor").hidden||!$("gate").hidden||!$("profile").hidden,open=!!openId||sheetOpen;
   if(open&&!wasOpen)homeY=window.scrollY;
   $("app").hidden=open;$("detail").hidden=!openId||sheetOpen;
+  // the event page is one solid colour edge to edge, including behind the phone's status bar
+  const dev=openId&&!sheetOpen?events.find(e=>e.id===openId):null;
+  document.body.style.background=dev?colorOf(dev).bg:"";
   window.scrollTo(0,open?0:homeY);wasOpen=open;
 }
 
@@ -961,7 +963,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795382928";
+const BUILD="1795387333";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
