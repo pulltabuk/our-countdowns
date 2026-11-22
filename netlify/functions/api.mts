@@ -69,6 +69,15 @@ export default async (req: Request, context: Context) => {
   const want = Buffer.from(cfg.hash, "hex");
   if (given.length !== want.length || !timingSafeEqual(given, want)) return json({ error: "auth" }, 401);
 
+  if (head === "passcode" && req.method === "POST") {
+    const b = (await req.json().catch(() => ({}))) as { pass?: unknown };
+    const next = str(b.pass, 100);
+    if (next.length < 6) return json({ error: "short" }, 400);
+    const salt = randomBytes(16).toString("hex");
+    await s.setJSON("config", { salt, hash: hash(next, salt) });
+    return json({ ok: true });
+  }
+
   // "rev" changes on every write, so phones can poll it cheaply and only reload when it moves.
   const bump = () => s.set("meta/rev", String(Date.now()));
   if (head === "rev" && req.method === "GET") return json({ rev: (await s.get("meta/rev")) || "0" });

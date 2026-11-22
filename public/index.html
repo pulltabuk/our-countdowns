@@ -364,6 +364,14 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="rows" id="manage-rows"></div>
     <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn" type="button" id="invite">Invite your partner</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
     <div class="pass" id="pass-box" hidden></div>
+    <div class="acts"><button class="btn ghost" type="button" id="chg-open">Change the passcode</button></div>
+    <form id="chg-form" class="fld" hidden novalidate>
+      <label for="chg-new">New passcode (at least 6 characters)</label>
+      <input class="inp" id="chg-new" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <p class="hint">Your partner's phone will ask for the new passcode the next time it opens, so tell them what it is.</p>
+      <div class="err" id="chg-err" hidden></div>
+      <button class="btn" type="submit" id="chg-save">Save new passcode</button>
+    </form>
     <p class="hint" id="invite-note" hidden></p>
   </div>
 </div>
@@ -795,6 +803,19 @@ $("invite").addEventListener("click",async()=>{
     else{await navigator.clipboard.writeText(url);note("Link copied. Send it to your partner, along with the passcode below.")}
   }catch(e){if(!e||e.name!=="AbortError")note("Send your partner this link: "+url)}
 });
+$("chg-open").addEventListener("click",()=>{$("chg-form").hidden=!$("chg-form").hidden;$("chg-err").hidden=true;$("chg-new").value=""});
+$("chg-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const v=$("chg-new").value.trim(),err=m=>{$("chg-err").textContent=m;$("chg-err").hidden=false};
+  if(v.length<6)return err("Use at least 6 characters.");
+  $("chg-save").disabled=true;
+  try{
+    await api("POST","passcode",{pass:v});pass=v;try{localStorage.setItem("oc.pass",v)}catch(x){}
+    $("chg-form").hidden=true;$("pass-box").hidden=false;$("pass-box").textContent=v;$("show-pass").textContent="Hide the passcode";
+    $("invite-note").textContent="Passcode changed. Give the new one to your partner.";$("invite-note").hidden=false;
+  }catch(x){err("That did not save. Check your connection and try again.")}
+  $("chg-save").disabled=false;
+});
 $("show-pass").addEventListener("click",()=>{const b=$("pass-box");b.hidden=!b.hidden;b.textContent=pass||"Not saved on this phone";$("show-pass").textContent=b.hidden?"Show the passcode":"Hide the passcode"});
 $("pf-name").addEventListener("input",()=>{if(!pfPhoto)drawPf()});
 $("pf-list").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(b){setMe(b.dataset.pick);history.back()}});
@@ -846,7 +867,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795379175";
+const BUILD="1795379299";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
