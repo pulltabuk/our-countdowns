@@ -453,7 +453,7 @@ function info(ev,now,forced){
 }
 function whenText(ev,t){
   return ev.mode==="month"?t.toLocaleDateString(undefined,{month:"long",year:"numeric"})
-    :t.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    :t.toLocaleDateString(undefined,{weekday:"long"})+" "+t.getDate()+" "+t.toLocaleDateString(undefined,{month:"long"})+" "+t.getFullYear();
 }
 function words(ev,I){
   if(I.state==="today")return ev.mode==="month"
@@ -867,7 +867,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795379299";
+const BUILD="1795379346";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
