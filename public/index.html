@@ -364,7 +364,8 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="rows" id="manage-rows"></div>
     <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn" type="button" id="invite">Invite your partner</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
     <div class="pass" id="pass-box" hidden></div>
-    <div class="acts"><button class="btn ghost" type="button" id="chg-open">Change the passcode</button></div>
+    <p class="hint" id="admin-note"></p>
+    <div class="acts"><button class="btn ghost" type="button" id="admin-claim" hidden>Make this phone the administrator</button><button class="btn ghost" type="button" id="chg-open" hidden>Change the passcode</button></div>
     <form id="chg-form" class="fld" hidden novalidate>
       <label for="chg-new">New passcode (at least 6 characters)</label>
       <input class="inp" id="chg-new" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -574,6 +575,8 @@ function rowHTML(ev,sub,action){
   return'<button type="button" class="row" data-edit="'+esc(ev.id)+'"><span class="sw" style="--c:'+c.bg+'">'+esc(ev.icon)+'</span><span class="rt"><b>'+esc(ev.title)+"</b><span>"+esc(sub)+"</span></span>"+(action?'<span class="go">'+action+"</span>":"")+"</button>";
 }
 function renderManage(){
+  $("admin-claim").hidden=hasAdmin;$("chg-open").hidden=!isAdmin;if(!isAdmin)$("chg-form").hidden=true;
+  $("admin-note").textContent=isAdmin?"You are the administrator. Only this phone can change the passcode.":hasAdmin?"Only the administrator can change the passcode.":"No administrator yet. The administrator is the one phone allowed to change the passcode.";
   const mp=profiles[me];
   $("me-row").innerHTML=(mp?avatar(me,"md"):'<span class="av md">?</span>')+'<span class="rt"><b>'+(mp?esc(mp.name):"Add your name and photo")+"</b><span>"+(mp?"Your profile":"So you can both see who added what")+'</span></span><span class="go">'+(mp?"Change":"Set up")+"</span>";
   const now=new Date(),list=events.filter(e=>e&&e.title&&e.y).map(ev=>({ev,I:info(ev,now)})).sort((a,b)=>a.I.t-b.I.t);
@@ -740,10 +743,11 @@ $("f-delete").addEventListener("click",async()=>{
 });
 
 /* ---------- storage: a shared store behind one passcode ---------- */
-let pass="";try{pass=localStorage.getItem("oc.pass")||""}catch(e){}
+let pass="",adminKey="",isAdmin=false,hasAdmin=true;try{pass=localStorage.getItem("oc.pass")||"";adminKey=localStorage.getItem("oc.admin")||""}catch(e){}
+function setRole(d){isAdmin=!!d.admin;hasAdmin=!!d.hasAdmin;renderManage()}
 let lastJSON="",syncing=false,gateClaimed=true;
 async function api(method,path,body){
-  const r=await fetch("/api/"+path,{method,cache:"no-store",headers:{"content-type":"application/json","x-pass":pass},body:body?JSON.stringify(body):undefined});
+  const r=await fetch("/api/"+path,{method,cache:"no-store",headers:{"content-type":"application/json","x-pass":pass,"x-admin":adminKey},body:body?JSON.stringify(body):undefined});
   if(r.status===401)throw{code:"auth"};
   if(r.status===409)throw{code:"claimed"};
   if(r.status===429)throw{code:"busy"};
@@ -766,7 +770,7 @@ async function sync(full){
   if(syncing||!pass)return;syncing=true;
   try{
     if(!full&&rev){const r=await api("GET","rev");if(r.rev===rev){status("");syncing=false;return}}
-    const d=await api("GET","events");rev=d.rev||"";status("");setEvents(d.events||[],d.profiles||[]);maybeAskMe();
+    const d=await api("GET","events");rev=d.rev||"";status("");setRole(d);setEvents(d.events||[],d.profiles||[]);maybeAskMe();
   }
   catch(e){
     if(e.code==="auth"){pass="";showGate(true,"That passcode no longer works. Enter it again.")}
@@ -802,6 +806,11 @@ $("invite").addEventListener("click",async()=>{
     if(navigator.share){await navigator.share({title:"Our Countdowns",text,url});note("Now send them the passcode too: tap Show the passcode below.")}
     else{await navigator.clipboard.writeText(url);note("Link copied. Send it to your partner, along with the passcode below.")}
   }catch(e){if(!e||e.name!=="AbortError")note("Send your partner this link: "+url)}
+});
+$("admin-claim").addEventListener("click",async()=>{
+  const key=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,"0")).join("");
+  try{await api("POST","admin",{key});adminKey=key;try{localStorage.setItem("oc.admin",key)}catch(x){}isAdmin=true;hasAdmin=true;renderManage()}
+  catch(x){$("admin-note").textContent=x.code==="claimed"?"Another phone is already the administrator.":"That did not work. Check your connection and try again.";if(x.code==="claimed"){hasAdmin=true;$("admin-claim").hidden=true}}
 });
 $("chg-open").addEventListener("click",()=>{$("chg-form").hidden=!$("chg-form").hidden;$("chg-err").hidden=true;$("chg-new").value=""});
 $("chg-form").addEventListener("submit",async e=>{
@@ -857,7 +866,7 @@ $("gate-form").addEventListener("submit",async e=>{
     if(!gateClaimed)await api("POST","claim",{pass:v});
     pass=v;const d=await api("GET","events");
     try{localStorage.setItem("oc.pass",pass)}catch(x){}
-    $("gate").hidden=true;$("g-pass").value="";lock();status("");rev=d.rev||"";setEvents(d.events||[],d.profiles||[]);maybeAskMe();
+    $("gate").hidden=true;$("g-pass").value="";lock();status("");rev=d.rev||"";setRole(d);setEvents(d.events||[],d.profiles||[]);maybeAskMe();
   }catch(x){
     pass="";
     if(x.code==="claimed")showGate(true,"A passcode has already been created. Enter it to open.");
@@ -867,7 +876,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795379388";
+const BUILD="1795379488";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;

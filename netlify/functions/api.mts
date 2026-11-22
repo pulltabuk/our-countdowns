@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import type { Config, Context } from "@netlify/functions";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 // One blob per date (no read-modify-write), plus one config blob holding the passcode hash.
 const store = () => getStore({ name: "countdowns", consistency: "strong" });
@@ -49,9 +49,9 @@ export default async (req: Request, context: Context) => {
   const s = store();
   const parts = new URL(req.url).pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
   const [head, id] = parts;
-  const cfg = (await s.get("config", { type: "json" })) as { salt: string; hash: string } | null;
+  const cfg = (await s.get("config", { type: "json" })) as { salt: string; hash: string; adminHash?: string } | null;
 
-  if (head === "status" && req.method === "GET") return json({ claimed: !!cfg });
+  if (head === "status" && req.method === "GET") return json({ claimed: !!cfg, hasAdmin: !!cfg?.adminHash });
 
   if (head === "claim" && req.method === "POST") {
     const body = (await req.json().catch(() => ({}))) as { pass?: unknown };
@@ -69,12 +69,28 @@ export default async (req: Request, context: Context) => {
   const want = Buffer.from(cfg.hash, "hex");
   if (given.length !== want.length || !timingSafeEqual(given, want)) return json({ error: "auth" }, 401);
 
+  // The administrator is one phone holding a secret key; only it may change the shared passcode.
+  const sha = (v: string) => createHash("sha256").update(v).digest("hex");
+  const adminKey = req.headers.get("x-admin") || "";
+  const isAdmin = !!cfg.adminHash && adminKey.length >= 32 && sha(adminKey) === cfg.adminHash;
+
+  if (head === "admin" && req.method === "POST") {
+    if (cfg.adminHash) return json({ error: "taken" }, 409);
+    const b = (await req.json().catch(() => ({}))) as { key?: unknown };
+    const key = str(b.key, 200);
+    if (key.length < 32) return json({ error: "invalid" }, 400);
+    await s.setJSON("config", { ...cfg, adminHash: sha(key) });
+    await s.set("meta/rev", String(Date.now()));
+    return json({ ok: true });
+  }
+
   if (head === "passcode" && req.method === "POST") {
+    if (!isAdmin) return json({ error: "admin" }, 403);
     const b = (await req.json().catch(() => ({}))) as { pass?: unknown };
     const next = str(b.pass, 100);
     if (next.length < 6) return json({ error: "short" }, 400);
     const salt = randomBytes(16).toString("hex");
-    await s.setJSON("config", { salt, hash: hash(next, salt) });
+    await s.setJSON("config", { ...cfg, salt, hash: hash(next, salt) });
     return json({ ok: true });
   }
 
@@ -115,7 +131,7 @@ export default async (req: Request, context: Context) => {
         }),
       )
     ).filter(Boolean);
-    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles });
+    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles, hasAdmin: !!cfg.adminHash, admin: isAdmin });
   }
 
   if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
