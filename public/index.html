@@ -140,8 +140,8 @@ form.autoedit [data-own]{display:none!important}
 .pcap{font-size:.75rem;font-weight:600;opacity:.85;display:block}
 .ft{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
 .ft b{aspect-ratio:1;display:grid;place-items:center;border-radius:9px;font-family:var(--display);font-weight:800;font-size:1rem;box-shadow:0 0 0 1.5px var(--ink) inset}
-.ft b.gone{opacity:.3;text-decoration:line-through}
-.ft b.now{background:var(--ink);color:var(--c);transform:scale(1.12)}
+.ft b.gone{background:#000;color:#fff;box-shadow:none;font-size:1.15rem}
+.ft b.now{background:#fff;color:#000;box-shadow:0 0 0 2.5px #000 inset;transform:scale(1.14)}
 .tl{padding:26px 12px 0}
 .tl-track{position:relative;height:12px;border-radius:99px;box-shadow:0 0 0 1.5px var(--ink) inset}
 .tl-fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--ink);display:block}
@@ -153,8 +153,11 @@ form.autoedit [data-own]{display:none!important}
 .tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 2.5px var(--ink);transform:translate(-50%,-50%)}
 .tl-ends{display:flex;justify-content:space-between;gap:12px;margin:42px -12px 0;font-size:.875rem;font-weight:700}
 .ahead{display:flex;flex-direction:column;gap:8px}
-.ahead div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
-.ahead div.gone{opacity:.5}.ahead div.now{background:var(--ink);color:var(--c)}
+.ahead div{display:flex;justify-content:space-between;gap:12px;align-items:center;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
+.ahead div.gone{background:color-mix(in srgb,var(--ink) 14%,transparent)}
+.ahead b{display:flex;align-items:center;gap:10px}
+.tk2{width:1.55em;height:1.55em;flex:none;display:block}
+.noanim .card::before,.noanim .card::after,.noanim .pz{animation:none!important}.noanim .card.s-today{animation:none!important}.ahead div.now{background:var(--ink);color:var(--c)}
 .ahead b{font-family:var(--display);font-size:1.15rem;white-space:nowrap}
 
 /* special days */
@@ -502,7 +505,7 @@ function tagText(I){
   return"";
 }
 function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+'</span><span class="pcap">'+n+" of the last 10 days left</span>"}
-function finalTrack(n){let h='<div class="sec"><h3>Final ten countdown</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+i+"</b>";return h+'</div><div class="small">The filled box is today. Crossed-out days are behind you.</div></div>'}
+function finalTrack(n){let h='<div class="sec"><h3>Final ten countdown</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+(i>n?"✓":i)+"</b>";return h+'</div><div class="small">The white box is today. Black ticked boxes are days already behind you.</div></div>'}
 function stamp(n,sfx){
   const t=(n+" DAYS TO GO  ★  ").repeat(2);
   return'<svg class="stamp" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="sp'+sfx+'" d="M60,60 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"/></defs><g class="spin"><text font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#sp'+sfx+'" textLength="278">'+t+'</textPath></text></g><text x="60" y="73" text-anchor="middle" font-size="36" fill="currentColor">★</text></svg>';
@@ -577,6 +580,7 @@ function cardHTML(ev,fmt){
 }
 
 const PRIV='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Private: only you can see this"><circle cx="10" cy="10" r="10" fill="#000"/><circle cx="10" cy="7.4" r="3.3" fill="#fff"/><path d="M3.9 16.6c.8-3.3 3.2-4.8 6.1-4.8s5.3 1.5 6.1 4.8z" fill="#fff"/></svg>';
+const TICK='<svg class="tk2" viewBox="0 0 20 20" role="img" aria-label="Reached"><circle cx="10" cy="10" r="10" fill="#000"/><path d="M5.4 10.5l3.1 3.1 6.1-6.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const AUTO='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Added automatically"><circle cx="10" cy="10" r="10" fill="#000"/><rect x="5" y="6" width="10" height="9.2" rx="1.6" fill="#fff"/><path d="M5 9.4h10" stroke="#000" stroke-width="1.2"/><path d="M7.6 4.4v2.6M12.4 4.4v2.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
 /* ---------- automatic dates: UK bank holidays (official list) plus interesting dates worked out here ---------- */
@@ -663,6 +667,7 @@ function render(){
     if(view.sort==="far")list=list.slice().reverse();
     else if(view.sort==="new"&&view.show!=="auto")list=list.slice().sort((a,b)=>(b.ev.createdAt||0)-(a.ev.createdAt||0));
     else if(view.sort==="az"||view.sort==="za"){list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));if(view.sort==="za")list.reverse()}
+    wall.classList.toggle("noanim",view.show==="auto");
     wall.innerHTML=list.length?list.map(a=>cardHTML(a.ev,a.ev.important?"lrow big":"lrow")).join("")
       :'<div class="empty"><b>Nothing to show here</b><p>'+(view.show==="mine"?"You have no private events. Choose Everything to see the shared ones.":"Every event is private. Choose Everything to see them.")+"</p></div>";
   }
@@ -721,7 +726,7 @@ function renderDetail(ev){
     const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
     if(ahead.length){
       h+='<div class="sec"><h3>Special days</h3><div class="ahead">'+ahead.map(o=>{const st=o.m>I.days?"gone":o.m===I.days?"now":"";
-        return'<div class="'+st+'"><b>'+(st==="gone"?"✓ ":"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
+        return'<div class="'+st+'"><b>'+(st==="gone"?TICK:"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
         +(ahead.some(o=>o.m>I.days)?'<div class="small">Ticked days have already been reached.</div>':"")+"</div>"}
   }
   if(I.state!=="past"){
@@ -1033,7 +1038,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795388486";
+const BUILD="1795388890";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
