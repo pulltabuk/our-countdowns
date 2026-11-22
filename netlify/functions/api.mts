@@ -37,6 +37,7 @@ function clean(b: Record<string, unknown>) {
     })).filter((t) => t.id && t.text),
     repeat: !!b.repeat,
     important: !!b.important,
+    priv: !!b.priv,
     note: str(b.note, 200),
     createdAt: int(b.createdAt, 0, 9e15, Date.now()),
   };
@@ -72,6 +73,10 @@ export default async (req: Request, context: Context) => {
   // The administrator is one phone holding a secret key; only it may change the shared passcode.
   const sha = (v: string) => createHash("sha256").update(v).digest("hex");
   const adminKey = req.headers.get("x-admin") || "";
+  // "Only me" events belong to one phone: each phone sends its own secret key, and a private
+  // event is stored with that key's hash and only ever returned to the phone that holds it.
+  const deviceKey = req.headers.get("x-key") || "";
+  const keyHash = deviceKey.length >= 32 ? sha(deviceKey) : "";
   const isAdmin = !!cfg.adminHash && adminKey.length >= 32 && sha(adminKey) === cfg.adminHash;
 
   if (head === "admin" && req.method === "POST") {
@@ -118,7 +123,10 @@ export default async (req: Request, context: Context) => {
       await Promise.all(
         blobs.map(async (b) => {
           const data = (await s.get(b.key, { type: "json" })) as Record<string, unknown> | null;
-          return data ? { ...data, id: b.key.slice(3) } : null;
+          if (!data) return null;
+          const { owner, ...rest } = data;
+          if (owner && owner !== keyHash) return null;
+          return { ...rest, id: b.key.slice(3) };
         }),
       )
     ).filter(Boolean);
@@ -136,9 +144,16 @@ export default async (req: Request, context: Context) => {
 
   if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
 
+  const prev = (await s.get("ev/" + id, { type: "json" })) as { owner?: string } | null;
+  if (prev?.owner && prev.owner !== keyHash) return json({ error: "private" }, 403);
+
   if (req.method === "PUT") {
     const data = clean((await req.json().catch(() => ({}))) as Record<string, unknown>);
     if (!data) return json({ error: "invalid" }, 400);
+    if (data.priv) {
+      if (!keyHash) return json({ error: "key" }, 400);
+      data.owner = keyHash;
+    }
     await s.setJSON("ev/" + id, data);
     await bump();
     return json({ ok: true });

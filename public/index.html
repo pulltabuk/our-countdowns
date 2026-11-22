@@ -95,6 +95,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .lrow .wm{position:static;z-index:auto;flex:none;align-self:center;margin-left:16px;width:60px;height:60px;font-size:2.1rem}
 .lrow .body{flex:1;justify-content:center;padding:16px 14px;gap:6px}
 .lrow .tag{align-self:flex-start;white-space:normal}
+.vi{font-size:.8em}
+.vis{display:inline-block;align-self:flex-start;font-size:.875rem;font-weight:700;border-radius:999px;padding:7px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;margin-top:4px}
 .detail .when{font-weight:700;font-size:1.0625rem;opacity:1}
 .lrow .ttl{font-size:1.25rem;overflow-wrap:break-word;hyphens:auto}
 .lrow .when{font-size:.875rem}
@@ -394,6 +396,9 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="fld"><label for="f-scene">Poster picture</label>
       <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option></select></div>
     <div class="fld"><span class="lab">How are you getting there?</span><div class="tr" id="f-transport"></div></div>
+    <div class="fld"><span class="lab">Who can see this?</span>
+      <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">👥 Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">🔒 Only me</button></div>
+      <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
     <label class="check" for="f-repeat"><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
     <div class="fld"><label for="f-note">Note (optional)</label><textarea class="inp" id="f-note" rows="2" maxlength="200" placeholder="Flights booked, passports checked"></textarea></div>
@@ -537,7 +542,7 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when"><span class="vi" title="'+(ev.priv?"Only you":"Both of you")+'">'+(ev.priv?"🔒":"👥")+"</span> "+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
@@ -592,7 +597,7 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,real.t))+(ev.repeat?" · every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+'</span><span class="vis">'+(ev.priv?"🔒 Private: only you can see this":"👥 Shared: you both see this")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -688,6 +693,8 @@ function syncForm(){
   $("f-icons").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.icon===(draft.icon||"")));
   $("f-colors").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.color===draft.color));
   $("f-transport").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tr===(draft.transport||"")));
+  $("f-vis-all").setAttribute("aria-pressed",!draft.priv);$("f-vis-me").setAttribute("aria-pressed",!!draft.priv);
+  $("f-vis-hint").textContent=draft.priv?"Private: it shows only on this phone, and your partner never sees it.":"Shared: you both see it and can both change it.";
   const tt=$("f-title").value.trim().toLowerCase();let sg="";
   if(tt.length>=3)for(const[k,re]of KW)if(re.test(tt)){sg=SCENE_COLOR[k];break}
   draft.sugg=sg;const showSg=!!sg&&sg!==draft.color&&draft.noSugg!==sg;
@@ -700,7 +707,7 @@ function openEditor(ev,from){
   if(!canWrite)return;
   back=from||null;history.pushState({oc:1},"");
   editing=ev?ev.id:null;const now=new Date(),pad=n=>String(n).padStart(2,"0");
-  draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||""}:{mode:"day",icon:"⭐",transport:"",color:COLORS[events.length%COLORS.length].id};
+  draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||"",priv:!!ev.priv}:{mode:"day",icon:"⭐",transport:"",priv:false,color:COLORS[events.length%COLORS.length].id};
   $("form-title").textContent=ev?"Edit date":"New date";
   $("f-title").value=ev?ev.title:"";
   $("f-date").value=ev&&ev.mode!=="month"?ev.y+"-"+pad(ev.m)+"-"+pad(ev.d):"";
@@ -712,6 +719,8 @@ function openEditor(ev,from){
   $("f-save").disabled=false;$("f-save").textContent="Save";
   syncForm();$("manage").hidden=true;$("editor").hidden=false;$("editor").firstElementChild.scrollTop=0;lock();
 }
+$("f-vis-all").addEventListener("click",()=>{draft.priv=false;syncForm()});
+$("f-vis-me").addEventListener("click",()=>{draft.priv=true;syncForm()});
 $("f-mode-day").addEventListener("click",()=>{draft.mode="day";syncForm()});
 $("f-mode-month").addEventListener("click",()=>{draft.mode="month";syncForm()});
 $("f-icons").addEventListener("click",e=>{const b=e.target.closest("button");if(b){draft.icon=b.dataset.icon;syncForm()}});
@@ -731,7 +740,7 @@ $("form").addEventListener("submit",async e=>{
   if(draft.mode==="day"){const v=$("f-date").value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return fail("Pick the date, or choose No, just the month.");[y,m,d]=v.split("-").map(Number)}
   else{y=+$("f-year").value;m=+$("f-month").value}
   const old=editing&&events.find(x=>x.id===editing);
-  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
+  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
   $("f-save").disabled=true;$("f-save").textContent="Saving";
   try{await save(editing,body);history.back()}
   catch(err){fail("That did not save. Check your connection and try again.");$("f-save").disabled=false;$("f-save").textContent="Save"}
@@ -744,10 +753,11 @@ $("f-delete").addEventListener("click",async()=>{
 
 /* ---------- storage: a shared store behind one passcode ---------- */
 let pass="",adminKey="",isAdmin=false,hasAdmin=true;try{pass=localStorage.getItem("oc.pass")||"";adminKey=localStorage.getItem("oc.admin")||""}catch(e){}
+let deviceKey="";try{deviceKey=localStorage.getItem("oc.key")||"";if(!deviceKey){deviceKey=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,"0")).join("");localStorage.setItem("oc.key",deviceKey)}}catch(e){}
 function setRole(d){isAdmin=!!d.admin;hasAdmin=!!d.hasAdmin;renderManage()}
 let lastJSON="",syncing=false,gateClaimed=true;
 async function api(method,path,body){
-  const r=await fetch("/api/"+path,{method,cache:"no-store",headers:{"content-type":"application/json","x-pass":pass,"x-admin":adminKey},body:body?JSON.stringify(body):undefined});
+  const r=await fetch("/api/"+path,{method,cache:"no-store",headers:{"content-type":"application/json","x-pass":pass,"x-admin":adminKey,"x-key":deviceKey},body:body?JSON.stringify(body):undefined});
   if(r.status===401)throw{code:"auth"};
   if(r.status===409)throw{code:"claimed"};
   if(r.status===429)throw{code:"busy"};
@@ -876,7 +886,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795379488";
+const BUILD="1795380159";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
