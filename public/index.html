@@ -94,7 +94,8 @@ h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;lette
 .card.lrow{flex-direction:row;align-items:stretch;padding:0;min-height:104px;border-radius:24px}
 .lrow .wm{position:static;z-index:auto;flex:none;align-self:center;margin-left:16px;width:60px;height:60px;font-size:2.1rem}
 .lrow .body{flex:1;justify-content:center;padding:16px 14px;gap:6px}
-.lrow .tag{align-self:flex-start}
+.lrow .tag{align-self:flex-start;white-space:normal}
+.detail .when{font-weight:700;font-size:1.0625rem;opacity:1}
 .lrow .ttl{font-size:1.25rem;overflow-wrap:break-word;hyphens:auto}
 .lrow .when{font-size:.875rem}
 
@@ -408,7 +409,7 @@ const TRANSPORT=[["","None"],["plane","✈️ Plane"],["train","🚆 Train"],["c
 const TR_ICON={plane:"✈️",train:"🚆",car:"🚗",boat:"🚢",coach:"🚌"};
 const MILESTONES=[300,200,100,75,50,25];
 const SPECIAL={300:"Three hundred days exactly",200:"Two hundred on the dot",100:"One hundred days. Double digits start tomorrow.",75:"Seventy-five to go",50:"Fifty days. Halfway down from a hundred.",25:"Twenty-five left",
- 10:"Final ten",9:"Single digits",8:"Eight sleeps",7:"One week exactly",6:"Six sleeps",5:"Five. Count them on one hand.",4:"Four sleeps",3:"Three sleeps",2:"Two sleeps",1:"Tomorrow!"};
+ 10:"Final ten countdown",9:"Single digits",8:"Eight sleeps",7:"One week exactly",6:"Six sleeps",5:"Five. Count them on one hand.",4:"Four sleeps",3:"Three sleeps",2:"Two sleeps",1:"Tomorrow!"};
 const KEY="oc.events.v1";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -442,7 +443,7 @@ function info(ev,now,forced){
 }
 function whenText(ev,t){
   return ev.mode==="month"?t.toLocaleDateString(undefined,{month:"long",year:"numeric"})
-    :t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"long",year:"numeric"});
+    :t.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 }
 function words(ev,I){
   if(I.state==="today")return ev.mode==="month"
@@ -453,11 +454,11 @@ function words(ev,I){
 function tagText(I){
   if(I.state==="today")return"It's here";
   if(I.state==="milestone")return"Milestone";
-  if(I.state==="final")return I.days===1?"Tomorrow":I.days===7?"One week":"Final ten";
+  if(I.state==="final")return I.days===1?"Tomorrow":I.days===7?"One week":"Final ten countdown";
   return"";
 }
 function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+'</span><span class="pcap">'+n+" of the last 10 days left</span>"}
-function finalTrack(n){let h='<div class="sec"><h3>The final ten days</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+i+"</b>";return h+'</div><div class="small">The filled box is today. Crossed-out days are behind you.</div></div>'}
+function finalTrack(n){let h='<div class="sec"><h3>Final ten countdown</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+i+"</b>";return h+'</div><div class="small">The filled box is today. Crossed-out days are behind you.</div></div>'}
 function stamp(n,sfx){
   const t=(n+" DAYS TO GO  ★  ").repeat(2);
   return'<svg class="stamp" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="sp'+sfx+'" d="M60,60 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"/></defs><g class="spin"><text font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#sp'+sfx+'" textLength="278">'+t+'</textPath></text></g><text x="60" y="73" text-anchor="middle" font-size="36" fill="currentColor">★</text></svg>';
@@ -467,7 +468,7 @@ function tickText(I){
   if(I.state==="today"||I.state==="past")return"";
   const now=new Date(),ms=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)-now;
   const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3),p=n=>String(n).padStart(2,"0");
-  return(I.days===1?"Begins in ":"Next tick in ")+p(h)+":"+p(m)+":"+p(s);
+  return(I.days===1?"Starts at midnight, in ":"Drops to "+(I.days-1)+" at midnight, in ")+p(h)+":"+p(m)+":"+p(s);
 }
 
 const SCENES=["city","beach","mountains","ski","sea","country","home","xmas","party"];
@@ -587,7 +588,7 @@ function renderDetail(ev){
     if(pv==null)h+='<div class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</div>";
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    h+='<div class="stats"><div class="stat"><b>'+(I.days>=7?Math.floor(I.days/7):I.days)+'</b><span class="wk">'+(I.days>=7?(I.days<14?"week":"weeks")+(I.days%7?", "+I.days%7+(I.days%7===1?" day":" days"):" exactly"):(I.days===1?"day":"days"))+'</span></div><div class="stat"><b>'+wk+'</b><span>weekends</span></div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span>hours</span></div></div>";
+    h+='<div class="stats"><div class="stat"><b>'+(I.days>=7?Math.floor(I.days/7):I.days)+'</b><span class="wk">'+(I.days>=7?(I.days<14?"week":"weeks")+(I.days%7?", "+I.days%7+(I.days%7===1?" day":" days"):" exactly"):(I.days===1?"day":"days"))+'</span></div><div class="stat"><b>'+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b>'+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
     const ahead=[300,200,100,75,50,25,10].filter(m=>m<I.days).slice(0,4);
     if(ahead.length){
       h+='<div class="sec"><h3>Special days ahead</h3><div class="ahead">'+ahead.map(m=>{const nd=new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m);
@@ -833,7 +834,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795378408";
+const BUILD="1795378609";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
