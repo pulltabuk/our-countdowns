@@ -152,6 +152,11 @@ form.autoedit [data-own]{display:none!important}
 .tl-m.past{opacity:.45}
 .tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 2.5px var(--ink);transform:translate(-50%,-50%)}
 .tl-ends{display:flex;justify-content:space-between;gap:12px;margin:42px -12px 0;font-size:.875rem;font-weight:700}
+.live{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.live div{border-radius:16px;padding:14px 4px 12px;text-align:center;background:var(--ink);color:var(--c);min-width:0}
+.live b{display:block;font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.live b.sm{font-size:1.35rem;line-height:1.4}
+.live span{display:block;margin-top:8px;font-size:.6875rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .ahead{display:flex;flex-direction:column;gap:8px}
 .ahead div{display:flex;justify-content:space-between;gap:12px;align-items:center;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
 .ahead div.gone{background:color-mix(in srgb,var(--ink) 14%,transparent)}
@@ -505,6 +510,11 @@ function tagText(I){
   return"";
 }
 function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+'</span><span class="pcap">'+n+" of the last 10 days left</span>"}
+function liveHTML(ts){
+  const ms=Math.max(0,ts-Date.now()),d=Math.floor(ms/864e5),p=n=>String(n).padStart(2,"0");
+  return[[d.toLocaleString(),d===1?"day":"days"],[p(Math.floor(ms%864e5/36e5)),"hours"],[p(Math.floor(ms%36e5/6e4)),"minutes"],[p(Math.floor(ms%6e4/1e3)),"seconds"]]
+    .map(c=>'<div><b'+(c[0].length>3?' class="sm"':"")+">"+c[0]+"</b><span>"+c[1]+"</span></div>").join("");
+}
 function finalTrack(n){let h='<div class="sec"><h3>Final ten countdown</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+(i>n?"✓":i)+"</b>";return h+'</div><div class="small">The white box is today. Black ticked boxes are days already behind you.</div></div>'}
 function stamp(n,sfx){
   const t=(n+" DAYS TO GO  ★  ").repeat(2);
@@ -710,6 +720,7 @@ function renderDetail(ev){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
+    h+='<div class="sec"><h3>Live countdown</h3><div class="live" data-live="'+real.t.getTime()+'">'+liveHTML(real.t.getTime())+'</div><div class="small">Counting down to midnight at the start of the day.</div></div>';
     const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
     let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
     if(t0){
@@ -1038,7 +1049,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795388890";
+const BUILD="1795433716";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
@@ -1063,6 +1074,7 @@ async function boot(){
 /* ---------- ticking ---------- */
 setInterval(()=>{
   const now=new Date();if(dayKey(now)!==lastDay){render();return}
+  document.querySelectorAll("[data-live]").forEach(el=>{el.innerHTML=liveHTML(+el.dataset.live)});
   document.querySelectorAll("[data-tick]").forEach(el=>{const ev=events.find(e=>e.id===el.dataset.tick);if(ev)el.textContent=tickText(info(ev,now))});
 },1000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dayKey(new Date())!==lastDay)render()});
