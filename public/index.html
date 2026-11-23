@@ -222,6 +222,7 @@ form.autoedit [data-own]{display:none!important}
 .sugg i{width:26px;height:26px;border-radius:50%;background:var(--c);flex:none;display:block}
 .sugg span{flex:1 1 150px;min-width:0}
 .mini{border-radius:999px;padding:11px 18px;font-weight:700;background:var(--fg);color:var(--bg);min-height:46px}
+.mini.ghost[aria-pressed="true"]{background:var(--fg);color:var(--bg);box-shadow:none}
 .mini.ghost{background:transparent;color:var(--fg);box-shadow:0 0 0 1.5px var(--line) inset}
 
 /* inside a date the poster moves once, then rests */
@@ -832,7 +833,7 @@ $("f-colors").innerHTML=COLORS.map(c=>'<button type="button" data-color="'+c.id+
 
 function syncForm(){
   $("f-mode-day").setAttribute("aria-pressed",draft.mode==="day");$("f-mode-month").setAttribute("aria-pressed",draft.mode==="month");
-  $("f-day-wrap").hidden=draft.mode!=="day";$("f-time-wrap").hidden=draft.mode!=="day";$("f-month-wrap").hidden=draft.mode!=="month";
+  $("f-day-wrap").hidden=draft.mode!=="day";$("f-time-wrap").hidden=draft.mode!=="day";$("f-time-clear").setAttribute("aria-pressed",!$("f-time").value);$("f-month-wrap").hidden=draft.mode!=="month";
   $("f-icons").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.icon===(draft.icon||"")));
   $("f-colors").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.color===draft.color));
   $("f-transport").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tr===(draft.transport||"")));
@@ -862,7 +863,8 @@ function openEditor(ev,from){
   $("f-save").disabled=false;$("f-save").textContent="Save";
   syncForm();$("manage").hidden=true;$("editor").hidden=false;$("editor").firstElementChild.scrollTop=0;lock();
 }
-$("f-time-clear").addEventListener("click",()=>{$("f-time").value=""});
+$("f-time-clear").addEventListener("click",()=>{$("f-time").value="";syncForm()});
+["input","change"].forEach(k=>$("f-time").addEventListener(k,()=>syncForm()));
 $("f-vis-all").addEventListener("click",()=>{draft.priv=false;syncForm()});
 $("f-vis-me").addEventListener("click",()=>{draft.priv=true;syncForm()});
 $("f-mode-day").addEventListener("click",()=>{draft.mode="day";syncForm()});
@@ -1060,7 +1062,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795434528";
+const BUILD="1795435445";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
