@@ -167,8 +167,8 @@ form.autoedit [data-own]{display:none!important}
 
 /* special days */
 .s-milestone::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.6) 50%,transparent 64%);transform:translateX(-130%);animation:sweep 3s ease-in-out 1}
-.card.s-milestone::before,.card.s-final::before{content:"";position:absolute;inset:0;border-radius:inherit;border:4px solid rgba(255,255,255,.75);opacity:0;pointer-events:none;animation:ring 1.5s ease-in-out 2;will-change:opacity}
-.s-milestone .pz,.s-final .pz,.s-today .pz{animation:wobble 1.5s ease-in-out 1}
+.card.s-milestone::before,.card.s-final::before{content:"";position:absolute;inset:0;border-radius:inherit;border:4px solid rgba(255,255,255,.75);opacity:0;pointer-events:none;animation:ring 1.5s ease-in-out 1;will-change:opacity}
+.s-milestone .pz,.s-final .pz,.s-today .pz{animation:wobble 1.1s ease-in-out 1}
 .card.s-today{background-image:linear-gradient(115deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.5) 40%,rgba(255,255,255,0) 60%,rgba(255,255,255,.35) 80%,rgba(255,255,255,0));background-size:260% 100%;animation:party 3.2s linear infinite}
 .s-today .bigico{animation:hop 1s cubic-bezier(.3,1.6,.6,1) infinite alternate}
 .stamp{position:absolute;top:12px;right:12px;width:98px;height:98px;color:var(--ink)}
@@ -234,7 +234,9 @@ form.autoedit [data-own]{display:none!important}
 @keyframes party{to{background-position:-260% 0}}
 @keyframes hop{from{transform:rotate(-14deg) translateY(0)}to{transform:rotate(10deg) translateY(-12px)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes wobble{0%,100%{transform:rotate(-3deg) scale(1)}25%{transform:rotate(-12deg) scale(1.06)}70%{transform:rotate(12deg) scale(1.14)}}
+@keyframes wobble{0%,100%{transform:rotate(-3deg) scale(1)}50%{transform:rotate(9deg) scale(1.12)}}
+.card.still .pz,.card.still::before,.card.still::after{animation:none!important}
+.card .pz,.card::before,.card::after{animation-delay:var(--ad,0ms)!important}
 @keyframes rise{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
 
 .empty{grid-column:1/-1;border:2px dashed var(--line);border-radius:28px;padding:36px 22px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -606,9 +608,11 @@ function avatar(id,size){
 }
 const SCENE_COLOR={city:"cobalt",beach:"marigold",mountains:"jade",ski:"sky",sea:"cobalt",country:"lime",home:"flame",xmas:"flame",party:"orchid",concert:"violet",theatre:"brick",football:"forest",cake:"orchid",heart:"rose",dinner:"peach",train:"slate",plane:"sky",car:"olive",camping:"forest",halloween:"ink",fireworks:"plum"};
 
+const moved=new Map();
 function cardHTML(ev,fmt){
   const I=info(ev,new Date()),w=words(ev,I),tag=tagText(I);
-  let h='<button type="button" class="card '+fmt+" s-"+I.state+'" style="'+styleOf(ev,I)+'" data-id="'+esc(ev.id)+'">';
+  const seenKey=ev.id+I.state,t0m=moved.get(seenKey),gone=t0m?Date.now()-t0m:0,still=gone>3200;if(I.state!=="normal"&&!t0m)moved.set(seenKey,Date.now());
+  let h='<button type="button" class="card '+fmt+(still?" still":"")+" s-"+I.state+'" style="--ad:-'+gone+'ms;'+styleOf(ev,I)+'" data-id="'+esc(ev.id)+'">';
   h+=posterHTML(ev,false);
   const top='<span class="top">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+"</span>";
   const num='<span class="num'+(w.word?" word":"")+'">'+esc(w.num)+"</span>";
@@ -1084,7 +1088,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795447637";
+const BUILD="1795455544";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
