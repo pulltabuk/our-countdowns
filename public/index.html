@@ -341,6 +341,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 .sk{fill:color-mix(in srgb,var(--c) 28%,#FFF1D0)}.ry{fill:color-mix(in srgb,var(--c) 48%,#FFF1D0)}.sn{fill:#FFE08A}
 .fa{fill:color-mix(in srgb,var(--c) 72%,#FFF1D0)}.mi{fill:color-mix(in srgb,var(--c) 78%,#20143A)}.dk{fill:color-mix(in srgb,var(--c) 30%,#20143A)}
 .cr{fill:#FFF1D0}.ac{fill:#F2583A}
+.st-sn{stroke:#FFE08A}.st-ac{stroke:#F2583A}.st-cr{stroke:#FFF1D0}
 .pt{font-family:var(--display);font-weight:800;fill:#20143A}
 
 #fx{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
@@ -432,7 +433,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="sugg" id="f-sugg" hidden><i id="f-sugg-dot"></i><span id="f-sugg-text"></span><button type="button" class="mini" id="f-sugg-yes">Use it</button><button type="button" class="mini ghost" id="f-sugg-no">No thanks</button></div>
     <div class="fld"><span class="lab">Pick a colour</span><div class="swatches" id="f-colors"></div></div>
     <div class="fld"><label for="f-scene">Poster picture</label>
-      <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option></select></div>
+      <select class="inp" id="f-scene"><option value="auto">Choose for me from the name</option><option value="city">City skyline</option><option value="beach">Beach and palm</option><option value="mountains">Mountains</option><option value="ski">Ski slope</option><option value="sea">Ocean liner</option><option value="country">Countryside</option><option value="home">House on a hill</option><option value="xmas">Winter night</option><option value="party">Celebration</option><option value="cake">Birthday cake</option><option value="heart">Heart</option><option value="concert">Concert</option><option value="theatre">Theatre curtain</option><option value="football">Football</option><option value="dinner">Dinner table</option><option value="train">Train</option><option value="plane">Aeroplane</option><option value="car">Road trip</option><option value="camping">Camping</option><option value="halloween">Halloween</option><option value="fireworks">Fireworks</option></select></div>
     <div class="fld" data-own><span class="lab">How are you getting there?</span><div class="tr" id="f-transport"></div></div>
     <div class="fld" data-own><span class="lab">Who can see this?</span>
       <div class="seg"><button type="button" id="f-vis-all" aria-pressed="true">Both of us</button><button type="button" id="f-vis-me" aria-pressed="false">Only me</button></div>
@@ -539,13 +540,17 @@ function tickText(I){
   return(I.days===1?"Starts at midnight, in ":"Drops to "+(I.days-1)+" at midnight, in ")+p(h)+":"+p(m)+":"+p(s);
 }
 
-const SCENES=["city","beach","mountains","ski","sea","country","home","xmas","party"];
-const KW=[["ski",/\bski|snowboard|slope/],["xmas",/christmas|xmas|santa|noel/],["sea",/cruise|ferry|sail|boat|ship|voyage/],
+const SCENES=["city","beach","mountains","ski","sea","country","home","xmas","party","concert","theatre","football","cake","heart","dinner","train","plane","car","camping","halloween","fireworks"];
+const KW=[["ski",/\bski|snowboard|slope/],["xmas",/christmas|xmas|santa|noel/],["halloween",/halloween|spooky/],["fireworks",/bonfire|firework|new year|\bnye\b/],
+ ["concert",/concert|\bgig\b|festival|\bband\b|music|\btour\b/],["theatre",/theatre|theater|cinema|\bfilm\b|movie|musical|\bshow\b|\bplay\b|comedy|opera|ballet|panto/],
+ ["football",/football|\bmatch\b|soccer|rugby|stadium|\bgame\b|fixture|cup final/],["cake",/birthday|bday/],["heart",/anniversar|wedding|valentine|engag|honeymoon|date night/],
+ ["dinner",/dinner|lunch|\bmeal\b|restaurant|brunch|supper|tasting/],["camping",/camp|glamp/],["sea",/cruise|ferry|sail|boat|ship|voyage/],
  ["beach",/beach|summer|island|seaside|coast|spain|greece|ibiza|mallorca|majorca|canar|tenerife|algarve|maldives|caribbean|hawaii|bali|riviera|\bsun\b/],
- ["mountains",/mountain|alps|hik|lake|peak|switzerland|scotland|camp|trek/],["home",/home|house|moving|move in|mortgage/],
- ["party",/birthday|party|anniversar|wedding|new year|retire|graduat|celebrat|engag|baby/],["country",/country|cottage|road ?trip|drive|farm|village|garden/],
- ["city",/brussels|paris|london|rome|berlin|amsterdam|madrid|barcelona|lisbon|prague|vienna|dublin|edinburgh|new york|nyc|tokyo|dubai|city|town|weekend|trip|flight|concert|show|theatre|museum/]];
-const ICON_SCENE={"✈️":"city","🏝️":"beach","🏖️":"beach","🏔️":"mountains","🎿":"ski","⛺":"mountains","🚗":"country","🚢":"sea","🧳":"city","🌍":"city","🗽":"city","🎡":"city","🎄":"xmas","🎁":"xmas","❄️":"ski","☀️":"beach","🏡":"home","🔑":"home","🌸":"country","🍂":"country"};
+ ["mountains",/mountain|alps|hik|lake|peak|switzerland|scotland|trek/],["home",/home|house|moving|move in|mortgage/],
+ ["train",/train|rail|eurostar/],["plane",/flight|\bfly|airport|plane/],["car",/road ?trip|\bdrive|driving/],
+ ["party",/party|retire|graduat|celebrat|baby/],["country",/country|cottage|farm|village|garden/],
+ ["city",/brussels|paris|london|rome|berlin|amsterdam|madrid|barcelona|lisbon|prague|vienna|dublin|edinburgh|new york|nyc|tokyo|dubai|city|town|weekend|trip|museum/]];
+const ICON_SCENE={"✈️":"city","🏝️":"beach","🏖️":"beach","🏔️":"mountains","🎿":"ski","⛺":"camping","🚗":"country","🚢":"sea","🧳":"city","🌍":"city","🗽":"city","🎡":"city","🎄":"xmas","🎁":"xmas","❄️":"ski","☀️":"beach","🏡":"home","🔑":"home","🌸":"country","🍂":"country","🎸":"concert","🎟️":"theatre","🎬":"theatre","⚽":"football","🎂":"cake","❤️":"heart","💍":"heart","🍽️":"dinner","🥂":"dinner","🎃":"halloween","🚆":"train","🚌":"car"};
 function sceneOf(ev){
   if(ev.scene&&SCENES.includes(ev.scene))return ev.scene;
   const t=String(ev.title||"").toLowerCase();
@@ -569,6 +574,22 @@ const ART={
  xmas:()=>'<rect class="dk" width="120" height="160"/><circle class="cr" cx="92" cy="32" r="10"/>'+[[14,20],[34,38],[58,16],[74,46],[104,60],[20,58],[50,50],[110,14],[8,84],[66,74]].map(p=>'<circle class="cr" cx="'+p[0]+'" cy="'+p[1]+'" r="1.4"/>').join("")+'<path class="mi" d="M0 160V104q30-16 60-4t60-10v70z"/><path class="cr" d="M0 160v-34q30-10 60-2t60-6v42z"/><path class="fa" d="M40 60l13 22h-6l11 20h-7l12 22H17l12-22h-7l11-20h-6z"/><path class="ac" d="M40 50l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5zM74 109l17-13 17 13z"/><path class="fa" d="M78 108h26v18H78z"/><path class="sn" d="M88 114h6v7h-6z"/>',
  party:()=>rays(60,84)+sun(60,84,22)+'<path class="dk" d="M0 14q60 26 120 0v2q-60 26-120 0z"/><path class="ac" d="M8 20l10 3-7 11zM44 30l10 1-6 12zM80 30l10-2-3 13zM24 62l3 8 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z"/><path class="cr" d="M26 26l10 2-6 12zM62 32l10-1-4 12zM98 24l10-3-2 13zM96 54l2 6 6 1-5 4 2 6-5-3-5 3 2-6-5-4 6-1z"/><path class="dk" d="M0 160v-30q10-10 20 0 8-12 18-2 10-12 22 0 10-10 20 0 10-12 22 0 8-8 18 2v30z"/>'
 };
+const burst=(cx,cy,r,cls)=>{let d="";for(let i=0;i<12;i++){const a=i*Math.PI/6,c=Math.cos(a),n=Math.sin(a);d+="M"+(cx+c*r*.35).toFixed(1)+" "+(cy+n*r*.35).toFixed(1)+"L"+(cx+c*r).toFixed(1)+" "+(cy+n*r).toFixed(1)}return'<path class="'+cls+'" d="'+d+'" style="fill:none;stroke-width:2.4;stroke-linecap:round"/>'};
+const dots=(pts,cls,r)=>pts.map(p=>'<circle class="'+cls+'" cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'"/>').join("");
+Object.assign(ART,{
+ concert:()=>'<rect class="mi" width="120" height="160"/><path class="ry" opacity=".5" d="M22 0L-2 112h50zM98 0L72 112h50zM60 0L36 112h48z"/>'+dots([[22,6],[60,6],[98,6]],"sn",5)+'<path class="fa" d="M0 108h120v10H0z"/><circle class="dk" cx="60" cy="80" r="5.5"/><path class="dk" d="M53 87h14l2 21H51zM69 78h1.6v30H69z"/><circle class="dk" cx="32" cy="85" r="5"/><path class="dk" d="M26 91h12l2 17H24z"/><path class="ac" d="M24 101l20-10 1.4 2.6-20 10z"/><circle class="ac" cx="27" cy="102" r="4.5"/><circle class="dk" cx="90" cy="85" r="5"/><path class="dk" d="M84 91h12l1 17H83z"/><circle class="cr" cx="90" cy="103" r="7"/><circle class="cr" cx="102" cy="97" r="4"/><path class="dk" d="M0 160v-30q6-9 12 0 5-10 12-2 6-9 13 0 6-10 12-1 7-9 13 0 6-10 12-1 7-8 13 1 6-9 12 0 6-8 9 0v33zM20 130l2-16 3.4.6-2 16zM57 127l1-16h3.4l-1 16zM92 130l3-16 3.4.8-3 16z"/>',
+ theatre:()=>'<rect class="dk" width="120" height="160"/><path class="ry" opacity=".45" d="M60 0L24 134h72z"/><circle class="sn" cx="60" cy="100" r="24"/><circle class="dk" cx="60" cy="86" r="6"/><path class="dk" d="M52 94h16l4 30H48z"/><path class="mi" d="M0 160v-28h120v28z"/><path class="ac" d="M0 0h36q-4 60-18 108-6 18-18 30zM120 0H84q4 60 18 108 6 18 18 30z"/><path class="dk" opacity=".25" d="M10 0h4v120h-4zM22 0h4v96h-4zM106 0h4v120h-4zM94 0h4v96h-4z"/><path class="ac" d="M0 0h120v16q-10 10-20 0t-20 0-20 0-20 0-20 0-20 0z"/><path class="sn" d="M0 14h120v2.5H0z"/>',
+ football:()=>rays(60,58)+sun(60,58,16)+'<path class="mi" d="M0 104V76l14-8h92l14 8v28z"/>'+dots([[14,82],[26,80],[38,84],[50,80],[62,84],[74,80],[86,84],[98,80],[108,84],[20,92],[44,92],[68,92],[92,92]],"cr",1.8)+'<rect class="fa" y="100" width="120" height="60"/><path class="mi" opacity=".35" d="M0 100h20v60H0zM40 100h20v60H40zM80 100h20v60H80z"/><path class="cr" d="M28 70h64v34h-3.5V73.500h-57V104H28z"/><path class="cr" opacity=".45" d="M38 74h1.500v30H38zM48 74h1.500v30H48zM58 74h1.500v30H58zM68 74h1.500v30H68zM78 74h1.500v30H78zM32 82h56v1.500H32zM32 92h56v1.500H32z"/><circle class="cr" cx="60" cy="126" r="14"/><path class="dk" d="M60 117.500l7 5-2.700 8.200h-8.600l-2.700-8.200zM60 112v5.500M46.700 121.700l6.300 1M73.300 121.700l-6.300 1M51.600 138l4.100-7.300M68.400 138l-4.100-7.300" style="stroke:currentColor"/>',
+ cake:()=>rays(60,74)+'<path class="dk" d="M0 14q60 26 120 0v2q-60 26-120 0z"/><path class="ac" d="M8 20l10 3-7 11zM44 30l10 1-6 12zM80 30l10-2-3 13z"/><path class="cr" d="M26 26l10 2-6 12zM62 32l10-1-4 12zM98 24l10-3-2 13z"/><path class="dk" d="M0 160v-26h120v26z"/><path class="mi" d="M18 130h84v6H18z"/><path class="cr" d="M26 104h68v26H26z"/><path class="ac" d="M26 104h68v7q-8.500 7-17 0t-17 0-17 0-17 0z"/><path class="fa" d="M40 84h40v20H40z"/><path class="cr" d="M40 84h40v6q-5 5-10 0t-10 0-10 0-10 0z"/><path class="dk" d="M47 70h3v14h-3zM58.500 70h3v14h-3zM70 70h3v14h-3z"/><path class="sn" d="M48.500 58q5 7 0 11-5-4 0-11zM60 58q5 7 0 11-5-4 0-11zM71.500 58q5 7 0 11-5-4 0-11z"/>',
+ heart:()=>rays(60,80)+'<path class="ac" d="M60 122C24 98 24 62 44 60c8-1 13 4 16 10 3-6 8-11 16-10 20 2 20 38-16 62z"/><path class="cr" opacity=".85" d="M42 72c-3 6-2 14 3 20-9-8-9-20-3-20z"/><path class="cr" d="M24 44c-6-4-6-10-2.500-10.500 1.400-.2 2.200.7 2.500 1.700.3-1 1.100-1.900 2.500-1.700C30 34 30 40 24 44zM96 52c-8-5-8-13-3.300-13.600 1.800-.2 2.900.9 3.300 2.200.4-1.300 1.500-2.400 3.300-2.200C104 39 104 47 96 52z"/><path class="dk" d="M0 160v-22q30-12 60-2t60-4v28z"/>',
+ dinner:()=>rays(60,92)+'<circle class="cr" cx="60" cy="92" r="32"/><circle class="fa" cx="60" cy="92" r="21"/><circle class="cr" cx="60" cy="92" r="17"/><path class="dk" d="M14 56h2.500v20h2.500V56h2.500v20h2.500V56h2.500v25q0 5-4.500 6.500V132h-4V87.500Q14 86 14 81zM97 56q9 5 9 28v6h-4.500v42h-4z"/><path class="dk" d="M0 160v-18h120v18z"/><path class="cr" opacity=".35" d="M0 146h120v3H0zM0 153h120v3H0z"/><path class="ac" d="M54 26h12q0 12-6 13.500V46h4v2H56v-2h4v-6.500Q54 38 54 26z"/>',
+ train:()=>rays(88,48)+sun(88,48,16)+'<path class="fa" d="M0 160V96q30-18 60-6t60-10v80z"/><path class="mi" d="M0 106h120v54H0z"/><path class="sk" d="M8 160v-28q0-14 14-14t14 14v28zM46 160v-28q0-14 14-14t14 14v28zM84 160v-28q0-14 14-14t14 14v28z"/><path class="dk" d="M0 84h78q16 0 24 14v8H0z"/><path class="ac" d="M0 96h102.500l.5 4H0z"/><path class="sn" d="M6 87h8v6H6zM20 87h8v6h-8zM34 87h8v6h-8zM48 87h8v6h-8zM64 87h10q6 1 9 6H64z"/><path class="cr" d="M60 78q-4-10 6-12-2-10 10-8 6-8 14 0-10 0-12 8-10 0-10 12z"/>',
+ plane:()=>rays(94,40)+sun(94,40,15)+'<path class="cr" opacity=".7" d="M0 70q8-8 18-3 8-8 18 0 8-3 12 3z"/><path class="dk" d="M22 100l62-30c9-4 16 2 9 7l-58 31z"/><path class="dk" d="M52 86L34 60l8-4 30 22zM58 96l-6 30 8-3 16-33zM27 99L15 85l7-3 12 12z"/><path class="ac" d="M36 98l44-21 1.200 2.500-44 21z"/><path class="sn" d="M82 73l5-2.400 1 2-5 2.400z"/><path class="cr" d="M0 160v-24q10-10 22-4 8-12 22-4 12-10 24 0 10-8 20 0 12-8 22 2 6-4 10 0v30z"/>',
+ car:()=>rays(60,56)+sun(60,56,18)+'<path class="fa" d="M0 160V92q30-20 60-4t60-8v80z"/><path class="mi" d="M0 160v-52q40-16 80 0t40-4v56z"/><path class="cr" d="M22 160L52 104h16l30 56z"/><path class="mi" d="M58.500 110h3v8h-3zM58 124h4v10h-4zM57 142h6v12h-6z"/><path class="ac" d="M43 122l5-13h24l5 13zM38 122h44q3 0 3 3v11H35v-11q0-3 3-3z"/><path class="sk" d="M48 121l3.500-9.500h7.500v9.500zM61 121v-9.500h7.500l3.500 9.500z"/><path class="sn" d="M38 126h6v4h-6zM76 126h6v4h-6z"/><circle class="dk" cx="45" cy="137" r="5"/><circle class="dk" cx="75" cy="137" r="5"/>',
+ camping:()=>'<rect class="mi" width="120" height="160"/><circle class="cr" cx="92" cy="30" r="11"/><circle class="mi" cx="87" cy="27" r="10"/>'+dots([[14,18],[36,34],[58,14],[72,44],[108,58],[22,54],[48,48]],"cr",1.400)+'<path class="fa" opacity=".5" d="M0 160V104l24-28 22 22 22-34 28 36 24-20v80z"/><path class="dk" d="M0 160v-30q30-10 60-4t60-2v36zM8 132l8-30 8 30zM22 134l6-22 6 22zM100 130l7-26 7 26z"/><path class="ac" d="M36 136l26-42 26 42z"/><path class="cr" opacity=".35" d="M62 94l26 42H74z"/><path class="dk" d="M62 108l8 28H54z"/><path class="sn" d="M100 140q-7-9 0-18 7 9 0 18z"/><path class="ac" d="M100 140q-3.500-5 0-10 3.500 5 0 10z"/>',
+ halloween:()=>'<rect class="mi" width="120" height="160"/><circle class="sn" cx="60" cy="56" r="36"/><path class="dk" d="M18 46q6-9 11 0 4-6 8 0 5-9 11 0-8 0-12 7h-6q-4-7-12-7zM80 30q4-6 7.500 0 2.500-4 5 0 3.500-6 7.500 0-5.500 0-8 5h-4q-2.500-5-8-5z"/><path class="dk" d="M0 160v-34q30-12 60-4t60-4v42z"/><path class="dk" d="M88 122V86l8-10 8 10v36zM93 96h6v8h-6z"/><path class="sn" d="M94 97h4v6h-4z"/><ellipse class="ac" cx="48" cy="128" rx="27" ry="21"/><path class="dk" opacity=".2" d="M48 107q-12 21 0 42-4-21 0-42zM34 110q-10 18 0 36-6-18 0-36zM62 110q10 18 0 36 6-18 0-36z"/><path class="dk" d="M35 122l7-7 4 9zM54 124l4-9 7 7zM33 134q15 11 30 0-15 4-30 0zM46 102h5v7h-5z"/>',
+ fireworks:()=>'<rect class="dk" width="120" height="160"/>'+burst(38,46,26,"st-sn")+burst(86,34,20,"st-ac")+burst(74,84,24,"st-cr")+dots([[38,46],[86,34],[74,84]],"cr",2.500)+dots([[12,20],[108,70],[20,90],[56,18],[104,12]],"cr",1.200)+'<path class="mi" d="M0 160v-38h10v-8h8v8h8v-16h12v12h10v-22h6v-8h4v8h6v26h10v-10h14v10h8v-18h12v20h12v36z"/><path class="sn" d="M12 134h2v3h-2zm32-8h2v3h-2zm16-12h2v3h-2zm0 8h2v3h-2zm38 4h2v3h-2zm8 8h2v3h-2z"/>'
+});
 function posterHTML(ev,titled){
   let h='<span class="pz" aria-hidden="true"><svg viewBox="0 0 120 160"><rect class="sk" width="120" height="160"/>'+ART[sceneOf(ev)]();
   if(titled){const t=String(ev.title||"").toUpperCase().slice(0,18);
@@ -583,7 +604,7 @@ function avatar(id,size){
   const p=profiles[id];if(!p)return"";
   return p.photo?'<img class="av '+size+'" src="'+p.photo+'" alt="">':'<span class="av '+size+'">'+esc((p.name||"?").trim().charAt(0).toUpperCase())+"</span>";
 }
-const SCENE_COLOR={city:"cobalt",beach:"marigold",mountains:"jade",ski:"sky",sea:"cobalt",country:"lime",home:"flame",xmas:"flame",party:"orchid"};
+const SCENE_COLOR={city:"cobalt",beach:"marigold",mountains:"jade",ski:"sky",sea:"cobalt",country:"lime",home:"flame",xmas:"flame",party:"orchid",concert:"violet",theatre:"brick",football:"forest",cake:"orchid",heart:"rose",dinner:"peach",train:"slate",plane:"sky",car:"olive",camping:"forest",halloween:"ink",fireworks:"plum"};
 
 function cardHTML(ev,fmt){
   const I=info(ev,new Date()),w=words(ev,I),tag=tagText(I);
@@ -613,8 +634,8 @@ const nthWd=(y,m,wd,n)=>{const f=new Date(y,m,1);return new Date(y,m,1+(wd-f.get
 const lastWd=(y,m,wd)=>{const l=new Date(y,m+1,0);return new Date(y,m,l.getDate()-(l.getDay()-wd+7)%7)};
 const FUN=[
  ["burns-night","Burns Night","🥃","forest","country",y=>new Date(y,0,25)],
- ["valentines-day","Valentine's Day","❤️","rose","party",y=>new Date(y,1,14)],
- ["pancake-day","Pancake Day","🥞","marigold","home",y=>addD(easter(y),-47)],
+ ["valentines-day","Valentine's Day","❤️","rose","heart",y=>new Date(y,1,14)],
+ ["pancake-day","Pancake Day","🥞","marigold","dinner",y=>addD(easter(y),-47)],
  ["st-davids-day","St David's Day","🌼","lime","country",y=>new Date(y,2,1)],
  ["mothers-day","Mother's Day","💐","orchid","party",y=>addD(easter(y),-21)],
  ["st-patricks-day","St Patrick's Day","☘️","jade","city",y=>new Date(y,2,17)],
@@ -622,13 +643,13 @@ const FUN=[
  ["easter-sunday","Easter Sunday","🐣","lavender","country",y=>easter(y)],
  ["st-georges-day","St George's Day","🌹","brick","city",y=>new Date(y,3,23)],
  ["fathers-day","Father's Day","👔","cobalt","party",y=>nthWd(y,5,0,3)],
- ["halloween","Halloween","🎃","ink","xmas",y=>new Date(y,9,31)],
+ ["halloween","Halloween","🎃","violet","halloween",y=>new Date(y,9,31)],
  ["clocks-go-back","Clocks Go Back","⏰","slate","country",y=>lastWd(y,9,0)],
- ["bonfire-night","Bonfire Night","🎆","plum","party",y=>new Date(y,10,5)],
+ ["bonfire-night","Bonfire Night","🎆","plum","fireworks",y=>new Date(y,10,5)],
  ["remembrance-sunday","Remembrance Sunday","🌺","brick","country",y=>nthWd(y,10,0,2)],
  ["st-andrews-day","St Andrew's Day","🏔️","teal","mountains",y=>new Date(y,10,30)],
  ["christmas-eve","Christmas Eve","🎄","forest","xmas",y=>new Date(y,11,24)],
- ["new-years-eve","New Year's Eve","🎉","violet","party",y=>new Date(y,11,31)]];
+ ["new-years-eve","New Year's Eve","🎉","cobalt","fireworks",y=>new Date(y,11,31)]];
 function bankLook(t){t=t.toLowerCase();
   return/new year/.test(t)?{icon:"🎉",color:"violet",scene:"party"}:/good friday/.test(t)?{icon:"🐣",color:"lavender",scene:"country"}:/easter/.test(t)?{icon:"🐰",color:"mint",scene:"country"}
    :/early may/.test(t)?{icon:"🌸",color:"lime",scene:"country"}:/spring/.test(t)?{icon:"🌼",color:"jade",scene:"country"}:/summer/.test(t)?{icon:"☀️",color:"marigold",scene:"beach"}
@@ -1063,7 +1084,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795435789";
+const BUILD="1795446183";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
