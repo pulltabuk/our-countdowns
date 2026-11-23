@@ -30,6 +30,9 @@ function clean(b: Record<string, unknown>) {
     scene: str(b.scene, 16),
     transport: str(b.transport, 12),
     time: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(b.time ?? "")) ? String(b.time) : "",
+    loc: str(b.loc, 80).trim(),
+    lat: typeof b.lat === "number" && Math.abs(b.lat) <= 90 ? b.lat : null,
+    lon: typeof b.lon === "number" && Math.abs(b.lon) <= 180 ? b.lon : null,
     by: /^[A-Za-z0-9_-]{1,40}$/.test(String(b.by ?? "")) ? String(b.by) : "",
     todo: (Array.isArray(b.todo) ? b.todo : []).slice(0, 40).map((t: Record<string, unknown>) => ({
       id: str(t?.id, 20),
@@ -115,6 +118,29 @@ export default async (req: Request, context: Context) => {
     await s.setJSON("pf/" + id, { name, photo });
     await bump();
     return json({ ok: true });
+  }
+
+  // Turn a typed place into map coordinates using OpenStreetMap's search, remembering each answer.
+  if (head === "geo" && req.method === "GET") {
+    const q = str(new URL(req.url).searchParams.get("q"), 80).trim();
+    if (q.length < 2) return json({ found: false });
+    const key = "geo/" + sha(q.toLowerCase());
+    const hit = (await s.get(key, { type: "json" })) as { lat: number; lon: number } | null;
+    if (hit) return json({ found: true, ...hit });
+    try {
+      const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=en&q=" + encodeURIComponent(q), {
+        headers: { "User-Agent": "OurCountdowns/1.0 (private two-person countdown app)", Referer: new URL(req.url).origin + "/" },
+        signal: AbortSignal.timeout(8000),
+      });
+      const list = (await r.json()) as { lat?: string; lon?: string }[];
+      const lat = Number(list?.[0]?.lat);
+      const lon = Number(list?.[0]?.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return json({ found: false });
+      await s.setJSON(key, { lat, lon });
+      return json({ found: true, lat, lon });
+    } catch {
+      return json({ found: false });
+    }
   }
 
   // UK bank holidays come from the government's published list, cached here for a week at a time.

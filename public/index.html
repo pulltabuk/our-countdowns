@@ -152,6 +152,13 @@ form.autoedit [data-own]{display:none!important}
 .tl-m.past{opacity:.45}
 .tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 2.5px var(--ink);transform:translate(-50%,-50%)}
 .tl-ends{display:flex;justify-content:space-between;gap:12px;margin:42px -12px 0;font-size:.875rem;font-weight:700}
+.mapbox{position:relative;display:block;height:190px;border-radius:20px;overflow:hidden;background:#E8E4D8;box-shadow:0 0 0 1.5px var(--ink)}
+.mapbox .tiles{position:absolute;left:50%;top:50%;width:0;height:0}
+.mapbox .tiles img{position:absolute;width:128px;height:128px;max-width:none;display:block}
+.mapbox .pin{position:absolute;left:50%;top:50%;width:30px;height:40px;transform:translate(-50%,-96%);filter:none}
+.mapcap{display:flex;justify-content:space-between;align-items:center;gap:12px;color:inherit;text-decoration:none;border-radius:16px;padding:14px 16px;box-shadow:0 0 0 1.5px var(--ink) inset}
+.mapcap b{font-family:var(--display);font-size:1.15rem;min-width:0;overflow-wrap:anywhere}
+.mapcap span{font-size:.875rem;font-weight:700;white-space:nowrap}
 .live{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .live div{border-radius:16px;padding:14px 4px 12px;text-align:center;background:var(--ink);color:var(--c);min-width:0}
 .live b{display:block;font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
@@ -429,6 +436,9 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="fld" id="f-time-wrap" data-own><label for="f-time">Time (optional)</label>
       <div class="trow"><input class="inp" id="f-time" type="time"><button type="button" class="mini ghost" id="f-time-clear">No time</button></div>
       <p class="hint">Leave it empty if you don't know the time yet. You can add it later.</p></div>
+    <div class="fld" data-own><label for="f-loc">Location (optional)</label>
+      <input class="inp" id="f-loc" maxlength="80" placeholder="King's Cross Station, London" autocomplete="off" autocapitalize="words">
+      <p class="hint">A place name or address. The event page will show it on a map.</p></div>
     <div class="fld" id="f-month-wrap" hidden data-own><label for="f-month">Month and year</label>
       <div class="two"><select class="inp" id="f-month" aria-label="Month"></select><select class="inp" id="f-year" aria-label="Year"></select></div></div>
     <div class="fld"><span class="lab">Pick an icon (or None)</span><div class="icons" id="f-icons"></div></div>
@@ -524,6 +534,21 @@ const OKT=/^([01]\d|2[0-3]):[0-5]\d$/;
 function targetTs(ev,t){const m=ev.mode!=="month"&&OKT.test(ev.time||"")?ev.time.split(":"):null;return m?new Date(t.getFullYear(),t.getMonth(),t.getDate(),+m[0],+m[1]).getTime():t.getTime()}
 const hasTime=ev=>ev.mode!=="month"&&OKT.test(ev.time||"");
 function liveSec(ev,t){return'<div class="sec"><h3>Live countdown</h3><div class="live" data-live="'+targetTs(ev,t)+'">'+liveHTML(targetTs(ev,t))+'</div><div class="small">'+(hasTime(ev)?"Counting down to "+ev.time+" on the day.":"Counting down to midnight at the start of the day. Add a time to the event to make it exact.")+"</div></div>"}
+/* a small still map built from OpenStreetMap tiles, centred on the place, with a pin */
+function mapHTML(ev){
+  const q=encodeURIComponent(ev.loc),has=typeof ev.lat==="number"&&typeof ev.lon==="number";
+  const href="https://maps.apple.com/?q="+q+(has?"&ll="+ev.lat+","+ev.lon:"");
+  let h='<div class="sec"><h3>Where</h3>';
+  if(has){
+    const z=15,T=128,n=Math.pow(2,z),la=ev.lat*Math.PI/180,x=(ev.lon+180)/360*n*T,y=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n*T;
+    let tiles="";
+    for(let tx=Math.floor((x-290)/T);tx<=Math.floor((x+290)/T);tx++)for(let ty=Math.floor((y-100)/T);ty<=Math.floor((y+100)/T);ty++)
+      tiles+='<img alt="" loading="lazy" src="https://tile.openstreetmap.org/'+z+"/"+((tx%n+n)%n)+"/"+ty+'.png" style="left:'+(tx*T-x).toFixed(1)+"px;top:"+(ty*T-y).toFixed(1)+'px">';
+    h+='<a class="mapbox" href="'+href+'" target="_blank" rel="noopener" aria-label="Open '+esc(ev.loc)+' in Maps"><span class="tiles">'+tiles+'</span><svg class="pin" viewBox="0 0 24 32"><path d="M12 31C5 21 1 16 1 11a11 11 0 0122 0c0 5-4 10-11 20z" fill="#000" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="11" r="4" fill="#fff"/></svg></a>';
+  }
+  h+='<a class="mapcap" href="'+href+'" target="_blank" rel="noopener"><b>'+esc(ev.loc)+"</b><span>Open in Maps ›</span></a>";
+  return h+(has?'<div class="small">Map © OpenStreetMap contributors</div>':'<div class="small">That place could not be found on the map. Try a fuller name or address.</div>')+"</div>";
+}
 function liveHTML(ts){
   const ms=Math.max(0,ts-Date.now()),d=Math.floor(ms/864e5),p=n=>String(n).padStart(2,"0");
   return[[d.toLocaleString(),d===1?"day":"days"],[p(Math.floor(ms%864e5/36e5)),"hours"],[p(Math.floor(ms%36e5/6e4)),"minutes"],[p(Math.floor(ms%6e4/1e3)),"seconds"]]
@@ -627,7 +652,7 @@ function cardHTML(ev,fmt){
 
 const PRIV='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Private: only you can see this"><circle cx="10" cy="10" r="10" fill="#000"/><circle cx="10" cy="7.4" r="3.3" fill="#fff"/><path d="M3.9 16.6c.8-3.3 3.2-4.8 6.1-4.8s5.3 1.5 6.1 4.8z" fill="#fff"/></svg>';
 const TICK='<svg class="tk2" viewBox="0 0 20 20" role="img" aria-label="Reached"><circle cx="10" cy="10" r="10" fill="#000"/><path d="M5.4 10.5l3.1 3.1 6.1-6.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const AUTO='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Added automatically"><circle cx="10" cy="10" r="10" fill="#000"/><rect x="5" y="6" width="10" height="9.2" rx="1.6" fill="#fff"/><path d="M5 9.4h10" stroke="#000" stroke-width="1.2"/><path d="M7.6 4.4v2.6M12.4 4.4v2.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+const AUTO='<svg class="pi" viewBox="0 0 20 20" role="img" aria-label="Added automatically"><circle cx="10" cy="10" r="10" fill="#000"/><path d="M11.57 10.32L16.27 11.27M11.15 11.12L13.73 13.62M10.36 11.56L11.45 16.23M9.46 11.51L8.25 14.90M8.73 10.98L4.93 13.91M8.41 10.14L4.82 10.44M8.58 9.25L4.34 7.01M9.21 8.61L7.44 5.47M10.09 8.40L10.37 3.61M10.94 8.71L13.06 5.79M11.49 9.42L15.96 7.68" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>';
 
 /* ---------- automatic dates: UK bank holidays (official list) plus interesting dates worked out here ---------- */
 let hol=[],autoOv={},autoEvs=[];
@@ -750,7 +775,7 @@ function renderDetail(ev){
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
   h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(hasTime(ev)?" · "+ev.time:"")+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
-  if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t):"");
+  if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t):"")+(ev.loc?mapHTML(ev):"");
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
   if(I.state==="final")h+=finalTrack(I.days);
   if(I.state!=="today"&&I.state!=="past"){
@@ -758,6 +783,7 @@ function renderDetail(ev){
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
     h+=liveSec(ev,real.t);
+    if(ev.loc)h+=mapHTML(ev);
     const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
     let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
     if(t0){
@@ -881,7 +907,7 @@ function openEditor(ev,from){
   $("form-title").textContent=ev?(ev.auto?"Change how it looks":"Edit date"):"New date";$("form").classList.toggle("autoedit",!!(ev&&ev.auto));
   $("f-title").value=ev?ev.title:"";
   $("f-date").value=ev&&ev.mode!=="month"?ev.y+"-"+pad(ev.m)+"-"+pad(ev.d):"";
-  $("f-month").value=ev?ev.m:now.getMonth()+1;$("f-time").value=ev&&OKT.test(ev.time||"")?ev.time:"";
+  $("f-month").value=ev?ev.m:now.getMonth()+1;$("f-time").value=ev&&OKT.test(ev.time||"")?ev.time:"";$("f-loc").value=ev&&ev.loc||"";
   const ys=$("f-year");if(ev&&!ys.querySelector('option[value="'+ev.y+'"]')){const o=document.createElement("option");o.value=o.textContent=ev.y;ys.insertBefore(o,ys.firstChild)}
   ys.value=ev?ev.y:now.getFullYear();
   $("f-repeat").checked=!!(ev&&ev.repeat);$("f-important").checked=!!(ev&&ev.important);$("f-scene").value=ev&&SCENES.includes(ev.scene)?ev.scene:"auto";$("f-note").value=ev&&ev.note||"";
@@ -920,6 +946,11 @@ $("form").addEventListener("submit",async e=>{
   const old=editing&&events.find(x=>x.id===editing);
   const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
   $("f-save").disabled=true;$("f-save").textContent="Saving";
+  body.loc=$("f-loc").value.trim();body.lat=null;body.lon=null;
+  if(body.loc){
+    if(old&&old.loc===body.loc&&typeof old.lat==="number"){body.lat=old.lat;body.lon=old.lon}
+    else{try{const g=await api("GET","geo?q="+encodeURIComponent(body.loc));if(g.found){body.lat=g.lat;body.lon=g.lon}}catch(x){}}
+  }
   try{await save(editing,body);history.back()}
   catch(err){fail("That did not save. Check your connection and try again.");$("f-save").disabled=false;$("f-save").textContent="Save"}
 });
@@ -1088,7 +1119,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795455544";
+const BUILD="1795467187";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
