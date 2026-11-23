@@ -358,7 +358,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   </header>
   <div class="status" id="status" hidden></div>
   <div class="tools" id="tools" hidden>
-    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option><option value="new">Recently Created</option></select></label>
+    <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option><option value="new">Recently Created</option><option value="upd">Recently Updated</option></select></label>
     <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option><option value="auto">UK bank holidays and interesting dates</option></select></label>
   </div>
   <main class="wall" id="wall" aria-live="polite"></main>
@@ -662,7 +662,7 @@ async function loadHol(){
   try{const d=await api("GET","holidays");if(d.events&&d.events.length){hol=d.events;try{localStorage.setItem("oc.hol",JSON.stringify(hol))}catch(e){}lastJSON="";render()}}catch(e){holAsked=false}
 }
 let view={sort:"soon",show:"all"};
-try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za","new"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine","auto"].includes(v.show))view.show=v.show}catch(e){}
+try{const v=JSON.parse(localStorage.getItem("oc.view")||"{}");if(["soon","far","az","za","new","upd"].includes(v.sort))view.sort=v.sort;if(["all","shared","mine","auto"].includes(v.show))view.show=v.show}catch(e){}
 $("sort").value=view.sort;$("show").value=view.show;
 ["sort","show"].forEach(k=>$(k).addEventListener("change",e=>{view[k]=e.target.value;try{localStorage.setItem("oc.view",JSON.stringify(view))}catch(x){}render()}));
 function sorted(){
@@ -686,6 +686,7 @@ function render(){
   }else{
     let list=view.show==="auto"?autoEvs.map(ev=>({ev,I:info(ev,now)})).sort((a,b)=>a.I.days-b.I.days):view.show==="shared"?act.filter(a=>!a.ev.priv):view.show==="mine"?act.filter(a=>a.ev.priv):act;
     if(view.sort==="far")list=list.slice().reverse();
+    else if(view.sort==="upd"&&view.show!=="auto")list=list.slice().sort((a,b)=>(b.ev.updatedAt||b.ev.createdAt||0)-(a.ev.updatedAt||a.ev.createdAt||0));
     else if(view.sort==="new"&&view.show!=="auto")list=list.slice().sort((a,b)=>(b.ev.createdAt||0)-(a.ev.createdAt||0));
     else if(view.sort==="az"||view.sort==="za"){list=list.slice().sort((a,b)=>String(a.ev.title).localeCompare(String(b.ev.title),undefined,{sensitivity:"base"}));if(view.sort==="za")list.reverse()}
     wall.classList.toggle("noanim",view.show==="auto");
@@ -944,7 +945,7 @@ async function sync(full){
 async function save(id,body){
   id=id||(Date.now().toString(36)+Math.random().toString(36).slice(2,8));
   await api("PUT","events/"+id,body);
-  setEvents(events.filter(e=>e.id!==id).concat([Object.assign({},body,{id})]));
+  setEvents(events.filter(e=>e.id!==id).concat([Object.assign({},body,{id,updatedAt:Date.now()})]));
 }
 async function remove(id){await api("DELETE","events/"+id);setEvents(events.filter(e=>e.id!==id))}
 function status(msg){const s=$("status");s.hidden=!msg;s.textContent=msg||""}
@@ -1062,7 +1063,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795435445";
+const BUILD="1795435789";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;

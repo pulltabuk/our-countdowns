@@ -239,6 +239,7 @@ export default async (req: Request, context: Context) => {
   if (req.method === "PUT") {
     const data = clean((await req.json().catch(() => ({}))) as Record<string, unknown>);
     if (!data) return json({ error: "invalid" }, 400);
+    data.updatedAt = Date.now();
     if (data.priv) {
       if (!keyHash) return json({ error: "key" }, 400);
       data.owner = keyHash;
