@@ -297,6 +297,8 @@ form.autoedit [data-own]{display:none!important}
 .fld{display:flex;flex-direction:column;gap:10px;min-width:0}
 .fld>label,.fld>.lab{font-size:1.0625rem;font-weight:700;color:var(--fg)}
 .inp{font:inherit;font-size:18px;color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;min-width:0;min-height:60px}
+input.inp[type=time]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;text-align:left}
+.trow{display:flex;gap:8px;align-items:center}.trow .inp{flex:1;min-width:0}
 input.inp[type=date]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;text-align:left}
 input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--field);border-radius:14px;padding:4px;gap:4px}
@@ -420,6 +422,9 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="fld" data-own><span class="lab">Do you know the exact day?</span>
       <div class="seg"><button type="button" id="f-mode-day" aria-pressed="true">Yes, exact day</button><button type="button" id="f-mode-month" aria-pressed="false">No, just the month</button></div></div>
     <div class="fld" id="f-day-wrap" data-own><label for="f-date">Date</label><input class="inp" id="f-date" type="date"></div>
+    <div class="fld" id="f-time-wrap" data-own><label for="f-time">Time (optional)</label>
+      <div class="trow"><input class="inp" id="f-time" type="time"><button type="button" class="mini ghost" id="f-time-clear">No time</button></div>
+      <p class="hint">Leave it empty if you don't know the time yet. You can add it later.</p></div>
     <div class="fld" id="f-month-wrap" hidden data-own><label for="f-month">Month and year</label>
       <div class="two"><select class="inp" id="f-month" aria-label="Month"></select><select class="inp" id="f-year" aria-label="Year"></select></div></div>
     <div class="fld"><span class="lab">Pick an icon (or None)</span><div class="icons" id="f-icons"></div></div>
@@ -510,6 +515,11 @@ function tagText(I){
   return"";
 }
 function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+'</span><span class="pcap">'+n+" of the last 10 days left</span>"}
+const OKT=/^([01]\d|2[0-3]):[0-5]\d$/;
+/* the exact moment being counted to: the given time on the day, or midnight if no time was set */
+function targetTs(ev,t){const m=ev.mode!=="month"&&OKT.test(ev.time||"")?ev.time.split(":"):null;return m?new Date(t.getFullYear(),t.getMonth(),t.getDate(),+m[0],+m[1]).getTime():t.getTime()}
+const hasTime=ev=>ev.mode!=="month"&&OKT.test(ev.time||"");
+function liveSec(ev,t){return'<div class="sec"><h3>Live countdown</h3><div class="live" data-live="'+targetTs(ev,t)+'">'+liveHTML(targetTs(ev,t))+'</div><div class="small">'+(hasTime(ev)?"Counting down to "+ev.time+" on the day.":"Counting down to midnight at the start of the day. Add a time to the event to make it exact.")+"</div></div>"}
 function liveHTML(ts){
   const ms=Math.max(0,ts-Date.now()),d=Math.floor(ms/864e5),p=n=>String(n).padStart(2,"0");
   return[[d.toLocaleString(),d===1?"day":"days"],[p(Math.floor(ms%864e5/36e5)),"hours"],[p(Math.floor(ms%36e5/6e4)),"minutes"],[p(Math.floor(ms%6e4/1e3)),"seconds"]]
@@ -583,7 +593,7 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+(hasTime(ev)?", "+ev.time:""))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
@@ -711,16 +721,16 @@ function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(hasTime(ev)?" · "+ev.time:"")+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
-  if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>";
+  if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t):"");
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
   if(I.state==="final")h+=finalTrack(I.days);
   if(I.state!=="today"&&I.state!=="past"){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
     h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
-    h+='<div class="sec"><h3>Live countdown</h3><div class="live" data-live="'+real.t.getTime()+'">'+liveHTML(real.t.getTime())+'</div><div class="small">Counting down to midnight at the start of the day.</div></div>';
+    h+=liveSec(ev,real.t);
     const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
     let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
     if(t0){
@@ -822,7 +832,7 @@ $("f-colors").innerHTML=COLORS.map(c=>'<button type="button" data-color="'+c.id+
 
 function syncForm(){
   $("f-mode-day").setAttribute("aria-pressed",draft.mode==="day");$("f-mode-month").setAttribute("aria-pressed",draft.mode==="month");
-  $("f-day-wrap").hidden=draft.mode!=="day";$("f-month-wrap").hidden=draft.mode!=="month";
+  $("f-day-wrap").hidden=draft.mode!=="day";$("f-time-wrap").hidden=draft.mode!=="day";$("f-month-wrap").hidden=draft.mode!=="month";
   $("f-icons").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.icon===(draft.icon||"")));
   $("f-colors").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.color===draft.color));
   $("f-transport").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tr===(draft.transport||"")));
@@ -844,7 +854,7 @@ function openEditor(ev,from){
   $("form-title").textContent=ev?(ev.auto?"Change how it looks":"Edit date"):"New date";$("form").classList.toggle("autoedit",!!(ev&&ev.auto));
   $("f-title").value=ev?ev.title:"";
   $("f-date").value=ev&&ev.mode!=="month"?ev.y+"-"+pad(ev.m)+"-"+pad(ev.d):"";
-  $("f-month").value=ev?ev.m:now.getMonth()+1;
+  $("f-month").value=ev?ev.m:now.getMonth()+1;$("f-time").value=ev&&OKT.test(ev.time||"")?ev.time:"";
   const ys=$("f-year");if(ev&&!ys.querySelector('option[value="'+ev.y+'"]')){const o=document.createElement("option");o.value=o.textContent=ev.y;ys.insertBefore(o,ys.firstChild)}
   ys.value=ev?ev.y:now.getFullYear();
   $("f-repeat").checked=!!(ev&&ev.repeat);$("f-important").checked=!!(ev&&ev.important);$("f-scene").value=ev&&SCENES.includes(ev.scene)?ev.scene:"auto";$("f-note").value=ev&&ev.note||"";
@@ -852,6 +862,7 @@ function openEditor(ev,from){
   $("f-save").disabled=false;$("f-save").textContent="Save";
   syncForm();$("manage").hidden=true;$("editor").hidden=false;$("editor").firstElementChild.scrollTop=0;lock();
 }
+$("f-time-clear").addEventListener("click",()=>{$("f-time").value=""});
 $("f-vis-all").addEventListener("click",()=>{draft.priv=false;syncForm()});
 $("f-vis-me").addEventListener("click",()=>{draft.priv=true;syncForm()});
 $("f-mode-day").addEventListener("click",()=>{draft.mode="day";syncForm()});
@@ -879,7 +890,7 @@ $("form").addEventListener("submit",async e=>{
   if(draft.mode==="day"){const v=$("f-date").value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return fail("Pick the date, or choose No, just the month.");[y,m,d]=v.split("-").map(Number)}
   else{y=+$("f-year").value;m=+$("f-month").value}
   const old=editing&&events.find(x=>x.id===editing);
-  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
+  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
   $("f-save").disabled=true;$("f-save").textContent="Saving";
   try{await save(editing,body);history.back()}
   catch(err){fail("That did not save. Check your connection and try again.");$("f-save").disabled=false;$("f-save").textContent="Save"}
@@ -1049,7 +1060,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795433716";
+const BUILD="1795434528";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;

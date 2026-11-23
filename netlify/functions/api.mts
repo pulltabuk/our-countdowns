@@ -29,6 +29,7 @@ function clean(b: Record<string, unknown>) {
     color: str(b.color, 16),
     scene: str(b.scene, 16),
     transport: str(b.transport, 12),
+    time: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(b.time ?? "")) ? String(b.time) : "",
     by: /^[A-Za-z0-9_-]{1,40}$/.test(String(b.by ?? "")) ? String(b.by) : "",
     todo: (Array.isArray(b.todo) ? b.todo : []).slice(0, 40).map((t: Record<string, unknown>) => ({
       id: str(t?.id, 20),
