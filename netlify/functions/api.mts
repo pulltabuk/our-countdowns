@@ -31,6 +31,7 @@ function clean(b: Record<string, unknown>) {
     transport: str(b.transport, 12),
     time: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(b.time ?? "")) ? String(b.time) : "",
     loc: str(b.loc, 80).trim(),
+    addr: str(b.addr, 200).trim(),
     lat: typeof b.lat === "number" && Math.abs(b.lat) <= 90 ? b.lat : null,
     lon: typeof b.lon === "number" && Math.abs(b.lon) <= 180 ? b.lon : null,
     by: /^[A-Za-z0-9_-]{1,40}$/.test(String(b.by ?? "")) ? String(b.by) : "",
@@ -120,24 +121,53 @@ export default async (req: Request, context: Context) => {
     return json({ ok: true });
   }
 
+  // Suggestions while typing a place, from Photon (an OpenStreetMap search built for search-as-you-type).
+  if (head === "suggest" && req.method === "GET") {
+    const q = str(new URL(req.url).searchParams.get("q"), 80).trim();
+    if (q.length < 3) return json({ places: [] });
+    try {
+      const r = await fetch("https://photon.komoot.io/api/?limit=6&lang=en&lat=52.8&lon=-1.6&q=" + encodeURIComponent(q), {
+        headers: { "User-Agent": "OurCountdowns/1.0 (private two-person countdown app)" },
+        signal: AbortSignal.timeout(6000),
+      });
+      const data = (await r.json()) as { features?: { properties?: Record<string, unknown>; geometry?: { coordinates?: number[] } }[] };
+      const seen = new Set<string>();
+      const places = (data.features || [])
+        .map((f) => {
+          const p = f.properties || {};
+          const c = f.geometry?.coordinates || [];
+          const road = [p.housenumber, p.street].filter(Boolean).join(" ");
+          const name = str(p.name || road || p.city, 80);
+          const parts = [road, p.district, p.city, p.county, p.postcode, p.country].map((x) => str(x, 60)).filter((x) => x && x !== name);
+          const addr = [...new Set(parts)].join(", ");
+          return { name, addr, lat: Number(c[1]), lon: Number(c[0]) };
+        })
+        .filter((x) => x.name && Number.isFinite(x.lat) && Number.isFinite(x.lon) && !seen.has(x.name + x.addr) && seen.add(x.name + x.addr));
+      return json({ places });
+    } catch {
+      return json({ places: [] });
+    }
+  }
+
   // Turn a typed place into map coordinates using OpenStreetMap's search, remembering each answer.
   if (head === "geo" && req.method === "GET") {
     const q = str(new URL(req.url).searchParams.get("q"), 80).trim();
     if (q.length < 2) return json({ found: false });
     const key = "geo/" + sha(q.toLowerCase());
-    const hit = (await s.get(key, { type: "json" })) as { lat: number; lon: number } | null;
+    const hit = (await s.get(key, { type: "json" })) as { lat: number; lon: number; addr?: string } | null;
     if (hit) return json({ found: true, ...hit });
     try {
       const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=en&q=" + encodeURIComponent(q), {
         headers: { "User-Agent": "OurCountdowns/1.0 (private two-person countdown app)", Referer: new URL(req.url).origin + "/" },
         signal: AbortSignal.timeout(8000),
       });
-      const list = (await r.json()) as { lat?: string; lon?: string }[];
+      const list = (await r.json()) as { lat?: string; lon?: string; display_name?: string }[];
       const lat = Number(list?.[0]?.lat);
       const lon = Number(list?.[0]?.lon);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return json({ found: false });
-      await s.setJSON(key, { lat, lon });
-      return json({ found: true, lat, lon });
+      const addr = str(list?.[0]?.display_name, 200);
+      await s.setJSON(key, { lat, lon, addr });
+      return json({ found: true, lat, lon, addr });
     } catch {
       return json({ found: false });
     }
