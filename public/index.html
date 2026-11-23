@@ -161,18 +161,24 @@ form.autoedit [data-own]{display:none!important}
 .mapcap b{font-family:var(--display);font-size:1.15rem;overflow-wrap:anywhere}
 .mapcap i{font-style:normal;font-size:.9rem;font-weight:500;line-height:1.35;overflow-wrap:anywhere}
 .mapcap .go2{font-size:.875rem;font-weight:700;white-space:nowrap}
-.sug{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
-.sug button{display:flex;flex-direction:column;gap:3px;padding:13px 16px;min-height:56px;justify-content:center;border-top:1px solid var(--line);width:100%}
-.sug button:first-child{border-top:0}
-.sug b{font-weight:700;font-size:1.0625rem;overflow-wrap:anywhere}
-.sug span{font-size:.875rem;color:var(--muted);overflow-wrap:anywhere}
+.sug{display:flex;flex-direction:column;border:2px solid var(--fg);border-radius:18px;overflow:hidden;background:var(--surface);box-shadow:0 12px 28px -10px rgba(0,0,0,.45)}
+.sug p{margin:0;padding:10px 16px;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--fg);color:var(--bg)}
+.sug button{display:flex;align-items:center;gap:14px;padding:14px 16px;min-height:64px;border-top:1px solid var(--line);width:100%}
+.sug button:first-of-type{border-top:0}
+.sug svg{width:22px;height:30px;flex:none;color:var(--fg)}
+.pk{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.pk b{font-weight:700;font-size:1.0625rem;overflow-wrap:anywhere}
+.pk span{font-size:.9rem;color:var(--muted);overflow-wrap:anywhere;line-height:1.35}
+.pk em{font-style:normal;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.picked{display:flex;align-items:center;gap:14px;border:2px solid var(--fg);border-radius:18px;padding:14px 16px;background:var(--field)}
+.picked .tk2{width:34px;height:34px}
 .live{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .live div{border-radius:16px;padding:14px 4px 12px;text-align:center;background:var(--ink);color:var(--c);min-width:0}
 .live b{display:block;font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .live b.sm{font-size:1.35rem;line-height:1.4}
 .live span{display:block;margin-top:8px;font-size:.6875rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .ahead{display:flex;flex-direction:column;gap:8px}
-.ahead div{display:flex;justify-content:space-between;gap:12px;align-items:center;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
+.ahead div{display:flex;justify-content:space-between;gap:6px 12px;align-items:center;flex-wrap:wrap;border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;font-weight:600}
 .ahead div.gone{background:color-mix(in srgb,var(--ink) 14%,transparent)}
 .ahead b{display:flex;align-items:center;gap:10px}
 .tk2{width:1.55em;height:1.55em;flex:none;display:block}
@@ -180,7 +186,7 @@ form.autoedit [data-own]{display:none!important}
 .ahead b{font-family:var(--display);font-size:1.15rem;white-space:nowrap}
 
 /* special days */
-.s-milestone::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.6) 50%,transparent 64%);transform:translateX(-130%);animation:sweep 3s ease-in-out 1}
+.card.s-milestone::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.6) 50%,transparent 64%);transform:translateX(-130%);animation:sweep 3s ease-in-out 1}
 .card.s-milestone::before,.card.s-final::before{content:"";position:absolute;inset:0;border-radius:inherit;border:4px solid rgba(255,255,255,.75);opacity:0;pointer-events:none;animation:ring 1.5s ease-in-out 1;will-change:opacity}
 .s-milestone .pz,.s-final .pz,.s-today .pz{animation:wobble 1.1s ease-in-out 1}
 .card.s-today{background-image:linear-gradient(115deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.5) 40%,rgba(255,255,255,0) 60%,rgba(255,255,255,.35) 80%,rgba(255,255,255,0));background-size:260% 100%;animation:party 3.2s linear infinite}
@@ -203,10 +209,10 @@ form.autoedit [data-own]{display:none!important}
 .dtop .flap.n4 b{width:40px;height:68px;font-size:2.7rem;border-radius:10px}
 .dtop .flap b.w{width:auto;height:76px;padding:0 16px;font-size:2rem}
 .detail .dtop .unit{margin-top:0}
-.stat span.wk.two{font-family:var(--display);font-size:1.15rem;font-weight:800;line-height:1.3;white-space:nowrap}
-.stat span.wk.two.long{font-size:1rem}
+.stat span.wk.two{font-family:var(--display);font-size:1.05rem;font-weight:800;line-height:1.3;white-space:nowrap}
+.stat span.wk.two.long{font-size:.92rem}
 .stat b.sm{font-size:1.25rem}.stat b.xs{font-size:1.05rem}
-.stat span.wk{font-size:1rem;font-weight:700;letter-spacing:0;text-transform:none;opacity:1;line-height:1.2}
+.stat span.wk{font-size:.9rem;font-weight:700;letter-spacing:0;text-transform:none;opacity:1;line-height:1.2}
 .claim{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);padding-top:22px;font-weight:600}
 .claim span{flex:1 1 140px}
 .pass{font-family:ui-monospace,Menlo,monospace;font-size:1.25rem;font-weight:700;background:var(--field);border-radius:16px;padding:16px;text-align:center;overflow-wrap:anywhere;user-select:all;-webkit-user-select:all}
@@ -217,8 +223,8 @@ form.autoedit [data-own]{display:none!important}
 /* shared checklist */
 .todo{display:flex;flex-direction:column;gap:8px}
 .ti{display:flex;align-items:center;gap:12px;border-radius:16px;padding:10px 12px;box-shadow:0 0 0 1.5px var(--ink) inset;min-height:58px}
-.ti>span{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
-.ti.done>span{text-decoration:line-through;opacity:.6}
+.ti>span:not(.av){flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.ti.done>span:not(.av){text-decoration:line-through;opacity:.6}
 .tk{width:36px;height:36px;border-radius:11px;box-shadow:0 0 0 2px var(--ink) inset;flex:none;display:grid;place-items:center;font-size:1.3rem;font-weight:800}
 .ti.done .tk{background:var(--ink);color:var(--c)}
 .tx{width:36px;height:36px;flex:none;display:grid;place-items:center;font-size:1rem;opacity:.7}
@@ -272,7 +278,7 @@ form.autoedit [data-own]{display:none!important}
 
 /* detail */
 .detail{min-height:100vh;background:var(--c);color:var(--ink)}
-.dwrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:30px;animation:rise .35s ease-out;
+.dwrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:20px;animation:rise .35s ease-out;
   padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 .dbar{display:flex;justify-content:space-between;gap:10px}
 .chip{border-radius:999px;padding:13px 24px;font-weight:700;font-size:1.0625rem;min-height:50px;box-shadow:0 0 0 1.5px var(--ink) inset;white-space:nowrap}
@@ -286,12 +292,14 @@ form.autoedit [data-own]{display:none!important}
 .detail .stamp{top:0;right:0;width:112px;height:112px}
 .shout{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
 
-.stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px}
-.stat{border-radius:18px;padding:16px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px var(--ink) inset;min-width:0}
+.stats{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px}
+.stat{border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px var(--ink) inset;min-width:0}
 .stat b{font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:-.03em;display:block;line-height:1;font-variant-numeric:tabular-nums}
 .stat span{font-size:.6875rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;opacity:.8}
-.sec{display:flex;flex-direction:column;gap:12px}
-.sec h3{margin:0;font-size:.75rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.8}
+.sec{display:flex;flex-direction:column;gap:14px;background:color-mix(in srgb,var(--ink) 10%,transparent);border-radius:24px;padding:20px 18px}
+.sec h3{margin:0;font-family:var(--display);font-size:1.3rem;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.facts i{font-style:normal;font-weight:700;font-size:.9375rem;border-radius:999px;padding:7px 14px;box-shadow:0 0 0 1.5px var(--ink) inset}
 .map{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .map i{width:9px;height:9px;border-radius:50%;background:var(--ink);opacity:.38;display:block}
 .map i.ms{opacity:1;width:13px;height:13px;background:transparent;box-shadow:0 0 0 3px var(--ink) inset}
@@ -446,7 +454,8 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="fld" data-own><label for="f-loc">Location (optional)</label>
       <input class="inp" id="f-loc" maxlength="80" placeholder="King's Cross Station, London" autocomplete="off" autocapitalize="words">
       <div class="sug" id="f-loc-sug" hidden></div>
-      <p class="hint" id="f-loc-hint">Start typing a place name or address and pick it from the suggestions.</p></div>
+      <div class="picked" id="f-loc-picked" hidden></div>
+      <p class="hint" id="f-loc-hint">Start typing a place name or address, then tap the right one in the list.</p></div>
     <div class="fld" id="f-month-wrap" hidden data-own><label for="f-month">Month and year</label>
       <div class="two"><select class="inp" id="f-month" aria-label="Month"></select><select class="inp" id="f-year" aria-label="Year"></select></div></div>
     <div class="fld"><span class="lab">Pick an icon (or None)</span><div class="icons" id="f-icons"></div></div>
@@ -541,7 +550,7 @@ const OKT=/^([01]\d|2[0-3]):[0-5]\d$/;
 /* the exact moment being counted to: the given time on the day, or midnight if no time was set */
 function targetTs(ev,t){const m=ev.mode!=="month"&&OKT.test(ev.time||"")?ev.time.split(":"):null;return m?new Date(t.getFullYear(),t.getMonth(),t.getDate(),+m[0],+m[1]).getTime():t.getTime()}
 const hasTime=ev=>ev.mode!=="month"&&OKT.test(ev.time||"");
-function liveSec(ev,t){return'<div class="sec"><h3>Live countdown</h3><div class="live" data-live="'+targetTs(ev,t)+'">'+liveHTML(targetTs(ev,t))+'</div><div class="small">'+(hasTime(ev)?"Counting down to "+ev.time+" on the day.":"Counting down to midnight at the start of the day. Add a time to the event to make it exact.")+"</div></div>"}
+function liveSec(ev,t,tiles){return'<div class="sec"><h3>Time left</h3><div class="live" data-live="'+targetTs(ev,t)+'">'+liveHTML(targetTs(ev,t))+"</div>"+tiles+'<div class="small">'+(hasTime(ev)?"The clock counts to "+ev.time+" on the day.":"The clock counts to midnight at the start of the day.")+"</div></div>"}
 /* a small still map built from OpenStreetMap tiles, centred on the place, with a pin */
 function mapHTML(ev){
   const q=encodeURIComponent(ev.loc),has=typeof ev.lat==="number"&&typeof ev.lon==="number";
@@ -562,7 +571,7 @@ function liveHTML(ts){
   return[[d.toLocaleString(),d===1?"day":"days"],[p(Math.floor(ms%864e5/36e5)),"hours"],[p(Math.floor(ms%36e5/6e4)),"minutes"],[p(Math.floor(ms%6e4/1e3)),"seconds"]]
     .map(c=>'<div><b'+(c[0].length>3?' class="sm"':"")+">"+c[0]+"</b><span>"+c[1]+"</span></div>").join("");
 }
-function finalTrack(n){let h='<div class="sec"><h3>Final ten countdown</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+(i>n?"✓":i)+"</b>";return h+'</div><div class="small">The white box is today. Black ticked boxes are days already behind you.</div></div>'}
+function finalTrack(n){let h='<div class="sec"><h3>Final ten countdown</h3><div class="ft">';for(let i=10;i>=1;i--)h+='<b class="'+(i>n?"gone":i===n?"now":"")+'">'+(i>n?"✓":i)+"</b>";return h+'</div><div class="small">The white box is today. Ticked days are done.</div></div>'}
 function stamp(n,sfx){
   const t=(n+" DAYS TO GO  ★  ").repeat(2);
   return'<svg class="stamp" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="sp'+sfx+'" d="M60,60 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"/></defs><g class="spin"><text font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#sp'+sfx+'" textLength="278">'+t+'</textPath></text></g><text x="60" y="73" text-anchor="middle" font-size="36" fill="currentColor">★</text></svg>';
@@ -780,18 +789,18 @@ function renderManage(){
 function renderDetail(ev){
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
+  const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean);
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+(hasTime(ev)?" · "+ev.time:"")+(ev.repeat?" · Every year":"")+(TR_ICON[ev.transport]?" · Going by "+ev.transport:"")+"</span></div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+"</span>"+(facts.length?'<span class="facts">'+facts.map(f=>"<i>"+esc(f)+"</i>").join("")+"</span>":"")+"</div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
-  if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t):"")+(ev.loc?mapHTML(ev):"");
+  if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t,""):"");
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
   if(I.state==="final")h+=finalTrack(I.days);
   if(I.state!=="today"&&I.state!=="past"){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    h+='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
-    h+=liveSec(ev,real.t);
-    if(ev.loc)h+=mapHTML(ev);
+    const tiles='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
+    h+=liveSec(ev,real.t,tiles);
     const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
     let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
     if(t0){
@@ -802,15 +811,15 @@ function renderDetail(ev){
           .map(o=>'<span class="tl-m '+(k++%2?"dn":"up")+(o.m>=I.days?" past":"")+'" style="left:'+o.x.toFixed(2)+'%"><b>'+o.m+"</b></span>").join("");
         h+='<div class="sec"><h3>Timeline</h3><div class="tl"><div class="tl-track"><i class="tl-fill" style="width:'+pc.toFixed(2)+'%"></i>'+marks+'<span class="tl-now" style="left:'+pc.toFixed(2)+'%"></span></div>'
           +'<div class="tl-ends"><span>'+(t0!==addT?"Last time ":"Added ")+fmt(t0)+"</span><span>"+fmt(tEnd)+" "+esc(ev.icon||"")+"</span></div></div>"
-          +'<div class="small">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+", "+(pc<10?(Math.round(pc*10)/10):Math.round(pc))+"% of the way there. The dot is today"+(marks?"; the numbered marks are the special days (days to go).":".")+"</div></div>";
+          +'<div class="small">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+" · "+(pc<10?(Math.round(pc*10)/10):Math.round(pc))+"% of the way there."+(marks?" Numbered marks are the special days.":"")+"</div></div>";
       }
     }
     const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
     if(ahead.length){
       h+='<div class="sec"><h3>Special days</h3><div class="ahead">'+ahead.map(o=>{const st=o.m>I.days?"gone":o.m===I.days?"now":"";
-        return'<div class="'+st+'"><b>'+(st==="gone"?TICK:"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"
-        +(ahead.some(o=>o.m>I.days)?'<div class="small">Ticked days have already been reached.</div>':"")+"</div>"}
+        return'<div class="'+st+'"><b>'+(st==="gone"?TICK:"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"+"</div>"}
   }
+  if(ev.loc)h+=mapHTML(ev);
   if(I.state!=="past"){
     const todo=Array.isArray(ev.todo)?ev.todo:[],dn=todo.filter(t=>t.done).length;
     h+='<div class="sec"><h3>Things to remember and do</h3><div class="todo">'+todo.map(t=>'<div class="ti'+(t.done?" done":"")+'"><button type="button" class="tk" data-tk="'+esc(t.id)+'" aria-label="Tick off">'+(t.done?"✓":"")+"</button><span>"+esc(t.text)+"</span>"+avatar(t.by,"sm")+'<button type="button" class="tx" data-tx="'+esc(t.id)+'" aria-label="Remove">✕</button></div>').join("")+"</div>"
@@ -915,7 +924,7 @@ function openEditor(ev,from){
   $("form-title").textContent=ev?(ev.auto?"Change how it looks":"Edit date"):"New date";$("form").classList.toggle("autoedit",!!(ev&&ev.auto));
   $("f-title").value=ev?ev.title:"";
   $("f-date").value=ev&&ev.mode!=="month"?ev.y+"-"+pad(ev.m)+"-"+pad(ev.d):"";
-  $("f-month").value=ev?ev.m:now.getMonth()+1;$("f-time").value=ev&&OKT.test(ev.time||"")?ev.time:"";$("f-loc").value=ev&&ev.loc||"";locPick=null;$("f-loc-sug").hidden=true;$("f-loc-hint").textContent=ev&&ev.addr?ev.addr:"Start typing a place name or address and pick it from the suggestions.";
+  $("f-month").value=ev?ev.m:now.getMonth()+1;$("f-time").value=ev&&OKT.test(ev.time||"")?ev.time:"";$("f-loc").value=ev&&ev.loc||"";locPick=ev&&ev.loc&&typeof ev.lat==="number"?{name:ev.loc,addr:ev.addr||"",lat:ev.lat,lon:ev.lon}:null;$("f-loc-sug").hidden=true;drawPick();
   const ys=$("f-year");if(ev&&!ys.querySelector('option[value="'+ev.y+'"]')){const o=document.createElement("option");o.value=o.textContent=ev.y;ys.insertBefore(o,ys.firstChild)}
   ys.value=ev?ev.y:now.getFullYear();
   $("f-repeat").checked=!!(ev&&ev.repeat);$("f-important").checked=!!(ev&&ev.important);$("f-scene").value=ev&&SCENES.includes(ev.scene)?ev.scene:"auto";$("f-note").value=ev&&ev.note||"";
@@ -925,22 +934,29 @@ function openEditor(ev,from){
 }
 /* place suggestions while typing */
 let locPick=null,locSeq=0,locTimer=0,locList=[];
+const PIN='<svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 31C5 21 1 16 1 11a11 11 0 0122 0c0 5-4 10-11 20z" fill="currentColor"/><circle cx="12" cy="11" r="4" fill="var(--surface)"/></svg>';
+function drawPick(){
+  const box=$("f-loc-picked");box.hidden=!locPick;$("f-loc-hint").hidden=!!locPick;
+  if(locPick)box.innerHTML=TICK+'<span class="pk"><b>'+esc(locPick.name)+"</b>"+(locPick.addr?"<span>"+esc(locPick.addr)+"</span>":"")+'<em>Place chosen</em></span><button type="button" class="mini ghost" id="f-loc-clear">Remove</button>';
+}
+$("f-loc-picked").addEventListener("click",e=>{if(e.target.closest("#f-loc-clear")){locPick=null;$("f-loc").value="";drawPick()}});
 $("f-loc").addEventListener("input",()=>{
-  clearTimeout(locTimer);locPick=null;const q=$("f-loc").value.trim(),box=$("f-loc-sug");
-  $("f-loc-hint").textContent="Start typing a place name or address and pick it from the suggestions.";
+  clearTimeout(locTimer);locPick=null;drawPick();const q=$("f-loc").value.trim(),box=$("f-loc-sug");
   if(q.length<3){box.hidden=true;return}
   locTimer=setTimeout(async()=>{
     const my=++locSeq;
     try{
       const d=await api("GET","suggest?q="+encodeURIComponent(q));if(my!==locSeq)return;
       locList=d.places||[];box.hidden=!locList.length;
-      box.innerHTML=locList.map((pl,i)=>'<button type="button" data-i="'+i+'"><b>'+esc(pl.name)+"</b>"+(pl.addr?"<span>"+esc(pl.addr)+"</span>":"")+"</button>").join("");
+      box.innerHTML='<p>Tap the right place</p>'+locList.map((pl,i)=>'<button type="button" data-i="'+i+'">'+PIN+'<span class="pk"><b>'+esc(pl.name)+"</b>"+(pl.addr?"<span>"+esc(pl.addr)+"</span>":"")+"</span></button>").join("");
+      /* lift the field to the top of the screen so the list is not hidden behind the keyboard */
+      if(locList.length)$("f-loc").closest(".fld").scrollIntoView({block:"start",behavior:"smooth"});
     }catch(e){box.hidden=true}
   },350);
 });
 $("f-loc-sug").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const pl=locList[+b.dataset.i];if(!pl)return;
-  locSeq++;locPick=pl;$("f-loc").value=pl.name;$("f-loc-sug").hidden=true;$("f-loc-hint").textContent=pl.addr||"Place chosen.";
+  locSeq++;locPick=pl;$("f-loc").value=pl.name;$("f-loc-sug").hidden=true;$("f-loc").blur();drawPick();
 });
 $("f-time-clear").addEventListener("click",()=>{$("f-time").value="";syncForm()});
 ["input","change"].forEach(k=>$("f-time").addEventListener(k,()=>syncForm()));
@@ -1147,7 +1163,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795467485";
+const BUILD="1795467975";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
