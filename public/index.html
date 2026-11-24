@@ -638,7 +638,7 @@ function posterHTML(ev,titled){
   let h='<span class="pz" aria-hidden="true"><svg viewBox="0 0 120 160"><rect class="sk" width="120" height="160"/>'+ART[sceneOf(ev)]();
   if(titled){const t=String(ev.title||"").toUpperCase().slice(0,18);
     h+='<rect class="cr" y="132" width="120" height="28"/><text class="pt" x="60" y="151" text-anchor="middle" font-size="13"'+(t.length>9?' textLength="104" lengthAdjust="spacingAndGlyphs"':' letter-spacing="1.5"')+">"+esc(t)+"</text>"}
-  return h+"</svg>"+(ev.icon?"<em>"+esc(ev.icon)+"</em>":"")+(TR_ICON[ev.transport]?'<em class="tp">'+TR_ICON[ev.transport]+"</em>":"")+"</span>";
+  return h+"</svg>"+(ev.icon?"<em>"+esc(ev.icon)+"</em>":"")+(TR_ICON[ev.transport]&&TR_ICON[ev.transport]!==ev.icon?'<em class="tp">'+TR_ICON[ev.transport]+"</em>":"")+"</span>";
 }
 
 let profiles={},me="";
@@ -721,7 +721,7 @@ function autoList(){
 const findEv=id=>events.find(e=>e.id===id)||autoEvs.find(e=>e.id===id);
 async function saveAuto(ev,patch){
   const cur=Object.assign({color:ev.color,icon:ev.icon,scene:ev.scene||"",important:!!ev.important,todo:ev.todo||[]},patch);
-  await api("PUT","auto/"+ev.id,cur);autoOv[ev.id]=cur;try{localStorage.setItem("oc.auto",JSON.stringify(autoOv))}catch(e){}lastJSON="";render();
+  await send("PUT","auto/"+ev.id,cur);autoOv[ev.id]=cur;try{localStorage.setItem("oc.auto",JSON.stringify(autoOv))}catch(e){}lastJSON="";render();
 }
 let holAsked=false;
 async function loadHol(){
@@ -1010,7 +1010,9 @@ let deviceKey="";try{deviceKey=localStorage.getItem("oc.key")||"";if(!deviceKey)
 function setRole(d){isAdmin=!!d.admin;hasAdmin=!!d.hasAdmin;renderManage()}
 let lastJSON="",syncing=false,gateClaimed=true;
 async function api(method,path,body){
-  const r=await fetch("/api/"+path,{method,cache:"no-store",headers:{"content-type":"application/json","x-pass":pass,"x-admin":adminKey,"x-key":deviceKey},body:body?JSON.stringify(body):undefined});
+  let r;
+  try{r=await fetch("/api/"+path,{method,cache:"no-store",headers:{"content-type":"application/json","x-pass":pass,"x-admin":adminKey,"x-key":deviceKey},body:body?JSON.stringify(body):undefined})}
+  catch(e){throw{code:"offline"}}
   if(r.status===401)throw{code:"auth"};
   if(r.status===409)throw{code:"claimed"};
   if(r.status===429)throw{code:"busy"};
@@ -1030,8 +1032,28 @@ function maybeAskMe(){
   if(me||askedMe||openId||!$("gate").hidden||!$("manage").hidden||!$("editor").hidden)return;
   askedMe=true;openProfile();
 }
+/* Changes made with no connection wait here, are kept across restarts, and are sent in order once back online. */
+let outbox=[];try{outbox=JSON.parse(localStorage.getItem("oc.outbox")||"[]")||[]}catch(e){}
+function keepOutbox(){try{localStorage.setItem("oc.outbox",JSON.stringify(outbox))}catch(e){}}
+function pendingNote(){if(outbox.length)status(outbox.length+(outbox.length===1?" change is":" changes are")+" saved on this phone and will be sent when you are back online.")}
+function queue(op){outbox=outbox.filter(o=>o.path!==op.path);outbox.push(op);keepOutbox();pendingNote()}
+async function flush(){
+  while(outbox.length){
+    const o=outbox[0];
+    try{await api(o.method,o.path,o.body)}
+    catch(e){if(e.code==="offline"||e.code==="busy"||e.code==="auth")return false}
+    outbox.shift();keepOutbox();
+  }
+  return true;
+}
+async function send(method,path,body){
+  if(outbox.length&&!(await flush())){queue({method,path,body});return}
+  try{await api(method,path,body)}catch(e){if(e.code!=="offline")throw e;queue({method,path,body})}
+}
+window.addEventListener("online",()=>sync(true));
 async function sync(full){
   if(syncing||!pass)return;syncing=true;
+  if(outbox.length&&!(await flush())){pendingNote();loaded=true;syncing=false;return}
   try{
     if(!full&&rev){const r=await api("GET","rev");if(r.rev===rev){status("");syncing=false;return}}
     const d=await api("GET","events");rev=d.rev||"";status("");setRole(d);setEvents(d.events||[],d.profiles||[],d.auto);loadHol();maybeAskMe();
@@ -1044,10 +1066,10 @@ async function sync(full){
 }
 async function save(id,body){
   id=id||(Date.now().toString(36)+Math.random().toString(36).slice(2,8));
-  await api("PUT","events/"+id,body);
+  await send("PUT","events/"+id,body);
   setEvents(events.filter(e=>e.id!==id).concat([Object.assign({},body,{id,updatedAt:Date.now()})]));
 }
-async function remove(id){await api("DELETE","events/"+id);setEvents(events.filter(e=>e.id!==id))}
+async function remove(id){await send("DELETE","events/"+id);setEvents(events.filter(e=>e.id!==id))}
 function status(msg){const s=$("status");s.hidden=!msg;s.textContent=msg||""}
 
 /* ---------- profile: name and photo, set once per phone ---------- */
@@ -1163,7 +1185,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795506602";
+const BUILD="1795528232";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
