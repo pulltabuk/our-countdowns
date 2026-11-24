@@ -199,9 +199,6 @@ form.autoedit [data-own]{display:none!important}
 .dtop{display:flex;align-items:center;gap:24px}
 .detail .dtop .pz{width:38%;max-width:150px;margin:0 0 0 6px;flex:none;align-self:center}
 .detail .dtop .pz svg{border-radius:8px;box-shadow:0 0 0 4px #FFF1D0,0 4px 0 4px rgba(0,0,0,.18)}
-.detail .dtop .pz em{font-size:2.1rem;right:-14px;top:auto;bottom:-32px}
-.detail .dtop .pz{margin-bottom:28px}
-.detail .dtop .pz em.tp{right:auto;left:-14px}
 .dtop .cnt{min-width:0;flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;padding-left:8px}
 .dtop .flap{gap:5px}
 .dtop .flap b{width:66px;height:104px;font-size:4.5rem;border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
@@ -350,11 +347,13 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 /* poster art: flat 1930s travel-poster scenes, tinted from each date's colour */
 .pz{position:relative;flex:none;align-self:center;margin-left:18px;width:60px;transform:rotate(-3deg)}
 .pz svg{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 3px #FFF1D0,0 3px 0 3px rgba(0,0,0,.18)}
-.pz em{position:absolute;right:-10px;bottom:-9px;font-style:normal;font-size:1.4rem;line-height:1}
+/* icon and transport badges: round stickers pinned on the poster's bottom corners, the same on every poster */
+.pz em{position:absolute;right:-11px;bottom:-11px;width:30px;height:30px;border-radius:50%;background:#FFF1D0;box-shadow:0 0 0 2px #20143A,0 3px 0 2px rgba(0,0,0,.2);display:grid;place-items:center;font-style:normal;font-size:1.05rem;line-height:1}
+.pz em.tp{right:auto;left:-11px}
 .card.big{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-content:center}
 .big .pz{grid-row:1/3;width:104px;margin-left:20px}
-.big .pz em{font-size:2rem;right:-13px;bottom:-12px}
-.pz em.tp{right:auto;left:-10px}.big .pz em.tp{right:auto;left:-13px}.detail .pz em.tp{right:auto;left:-22px}
+.big .pz em{width:40px;height:40px;font-size:1.45rem;right:-13px;bottom:-13px}
+.big .pz em.tp{right:auto;left:-13px}.detail .pz em.tp{right:auto;left:-16px}
 .tr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tr button{border-radius:14px;padding:14px 6px;min-height:58px;font-weight:700;text-align:center;background:var(--field);border:1px solid var(--line)}
 .tr button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
@@ -362,7 +361,8 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 .big .side{flex-direction:row;align-items:flex-end;justify-content:flex-start;gap:12px;padding:0 16px 22px 24px}
 .detail .pz{width:min(60%,230px);margin:4px 0 14px 8px;align-self:flex-start}
 .detail .pz svg{border-radius:10px;box-shadow:0 0 0 6px #FFF1D0,0 14px 30px -10px rgba(0,0,0,.55)}
-.detail .pz em{font-size:3.2rem;right:-22px;bottom:-16px}
+.detail .pz em{width:40px;height:40px;font-size:1.45rem;right:-16px;bottom:-16px}
+.detail .dtop .pz{margin-bottom:14px}
 .preview #f-pz{display:flex;flex:none}
 .preview .pz{display:block;width:48px;margin:0 8px 0 4px}
 .sk{fill:color-mix(in srgb,var(--c) 28%,#FFF1D0)}.ry{fill:color-mix(in srgb,var(--c) 48%,#FFF1D0)}.sn{fill:#FFE08A}
@@ -710,8 +710,13 @@ Object.assign(ART,{
 });
 function posterHTML(ev,titled){
   let h='<span class="pz" aria-hidden="true"><svg viewBox="0 0 120 160"><rect class="sk" width="120" height="160"/>'+ART[sceneOf(ev)]();
-  if(titled){const t=String(ev.title||"").toUpperCase().slice(0,18);
-    h+='<rect class="cr" y="132" width="120" height="28"/><text class="pt" x="60" y="151" text-anchor="middle" font-size="13"'+(t.length>9?' textLength="104" lengthAdjust="spacingAndGlyphs"':' letter-spacing="1.5"')+">"+esc(t)+"</text>"}
+  if(titled){
+    /* the name sits in a cream band, on two lines when long, kept clear of the corner badges */
+    const t=String(ev.title||"").toUpperCase().replace(/\s+/g," ").trim().slice(0,30),ws=t.split(" ");let lines=[t];
+    if(t.length>9&&ws.length>1){let best=1,gap=1e9;for(let i=1;i<ws.length;i++){const g=Math.abs(ws.slice(0,i).join(" ").length-ws.slice(i).join(" ").length);if(g<gap){gap=g;best=i}}lines=[ws.slice(0,best).join(" "),ws.slice(best).join(" ")]}
+    const two=lines.length>1,fs=two?11:13,line=(x,y)=>'<text class="pt" x="60" y="'+y+'" text-anchor="middle" font-size="'+fs+'"'+(x.length*fs*.66>74?' textLength="74" lengthAdjust="spacingAndGlyphs"':' letter-spacing="1"')+">"+esc(x)+"</text>";
+    h+='<rect class="cr" y="'+(two?120:132)+'" width="120" height="'+(two?40:28)+'"/>'+(two?line(lines[0],135)+line(lines[1],150):line(t,151));
+  }
   return h+"</svg>"+(ev.icon?"<em>"+esc(ev.icon)+"</em>":"")+(TR_ICON[ev.transport]&&TR_ICON[ev.transport]!==ev.icon?'<em class="tp">'+TR_ICON[ev.transport]+"</em>":"")+"</span>";
 }
 
@@ -1292,7 +1297,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795563713";
+const BUILD="1795564080";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
