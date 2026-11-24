@@ -347,6 +347,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 /* poster art: flat 1930s travel-poster scenes, tinted from each date's colour */
 .pz{position:relative;flex:none;align-self:center;margin-left:18px;width:60px;transform:rotate(-3deg)}
 .pz svg{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 3px #FFF1D0,0 3px 0 3px rgba(0,0,0,.18)}
+.lrow .pz em{display:none}
 /* icon and transport badges: round stickers pinned on the poster's bottom corners, the same on every poster */
 .pz em{position:absolute;right:-11px;bottom:-11px;width:30px;height:30px;border-radius:50%;background:#FFF1D0;box-shadow:0 0 0 2px #20143A,0 3px 0 2px rgba(0,0,0,.2);display:grid;place-items:center;font-style:normal;font-size:1.05rem;line-height:1}
 .pz em.tp{right:auto;left:-11px}
@@ -865,7 +866,12 @@ function renderManage(){
 }
 
 /* ---------- detail ---------- */
+let detailStale=false;
 function renderDetail(ev){
+  /* mid-sentence in a box on this page: leave the page alone and redraw once they finish */
+  const ae=document.activeElement;
+  if(ae&&(ae.id==="t-new"||ae.id==="claim-name")&&ae.value.trim()&&$("detail").contains(ae)){detailStale=true;return}
+  detailStale=false;
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
   const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean);
@@ -910,8 +916,9 @@ function renderDetail(ev){
   else if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
   else h+='<div class="claim"><span>'+(ev.createdAt?"Added on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+". ":"")+"Nobody is recorded as adding this one."+(Object.keys(profiles).length?" Who added it?":"")+'</span><span class="who">'+Object.keys(profiles).map(id=>'<button type="button" class="chip" data-claim="'+esc(id)+'">'+avatar(id,"sm")+esc(profiles[id].name)+(id===me?" (you)":"")+"</button>").join("")+'<button type="button" class="chip" data-claimnew>Someone else</button></span>'+(claimNew?'<form class="tadd" data-claimform style="width:100%"><input class="inp" id="claim-name" maxlength="24" placeholder="Their name" autocapitalize="words" aria-label="Their name"><button class="bigbtn" type="submit">Save</button></form>':"")+"</div>";
   h+="</div>";
-  const typed=($("t-new")||{}).value||"";
-  el.innerHTML=h;el.scrollTop=keep;if(typed&&$("t-new"))$("t-new").value=typed;
+  const tn0=$("t-new"),typed=tn0?tn0.value:"",foc=!!tn0&&document.activeElement===tn0,caret=foc?tn0.selectionStart:0;
+  el.innerHTML=h;el.scrollTop=keep;
+  const tn1=$("t-new");if(tn1){if(typed)tn1.value=typed;if(foc){tn1.focus({preventScroll:true});try{tn1.setSelectionRange(caret,caret)}catch(e){}}}
 }
 function openDetail(id){const ev=findEv(id);if(!ev)return;history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
   if(info(ev,new Date()).state==="today"){partied.add(id+lastDay);celebrate(ev);fanfare()}}
@@ -929,11 +936,12 @@ function lock(){
 }
 
 async function saveTodo(ev,todo){try{if(ev.auto)await saveAuto(ev,{todo});else await save(ev.id,Object.assign({},ev,{todo}))}catch(e){status("That change did not save. Check your connection and try again.")}}
+$("detail").addEventListener("focusout",()=>setTimeout(()=>{if(detailStale&&openId){const ev=findEv(openId);if(ev)renderDetail(ev)}},0));
 let claimNew=false;
 $("detail").addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.hasAttribute("data-claimform")){
-    const ev0=findEv(openId),nm=($("claim-name").value||"").trim();if(!ev0||!nm)return;
+    const ev0=findEv(openId),nm=($("claim-name").value||"").trim();if(!ev0||!nm)return;$("claim-name").value="";
     const pid="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     profiles[pid]={name:nm,photo:""};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}
     claimNew=false;send("PUT","profiles/"+pid,{name:nm,photo:""}).catch(()=>{});save(ev0.id,Object.assign({},ev0,{by:pid})).catch(()=>{});return;
@@ -1297,18 +1305,31 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795564226";
+const BUILD="1795564774";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
     let tried="";try{tried=sessionStorage.getItem("oc.tried")||""}catch(e){}
-    if(v&&v!==BUILD&&(force||tried!==v)&&$("editor").hidden){try{sessionStorage.setItem("oc.tried",v)}catch(e){}try{await fetch("/",{cache:"reload"})}catch(e){}location.reload()}
+    /* never pull the page out from under someone who is filling something in; try again on the next check */
+    const busy=!$("editor").hidden||!$("profile").hidden||!$("gate").hidden||!!((($("t-new")||{}).value||"")+(($("claim-name")||{}).value||"")).trim();
+    if(v&&v!==BUILD&&(force||(tried!==v&&!busy))){
+      try{sessionStorage.setItem("oc.tried",v);sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
+      try{await fetch("/",{cache:"reload"})}catch(e){}
+      location.reload();
+    }
   }catch(e){}
 }
 $("reload").addEventListener("click",()=>{$("reload").textContent="Checking";checkUpdate(true).then(()=>setTimeout(()=>location.reload(),600))});
 async function boot(){
   checkUpdate();document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});
+  setInterval(()=>{if(!document.hidden)checkUpdate()},30000);
   events=readCache();lastJSON=JSON.stringify([events,profiles,autoOv]);loaded=events.length>0;render();
+  /* after an automatic update, come back to where the person was */
+  try{
+    const ro=sessionStorage.getItem("oc.reopen"),sy=+sessionStorage.getItem("oc.scroll")||0;sessionStorage.removeItem("oc.reopen");sessionStorage.removeItem("oc.scroll");
+    if(sy)window.scrollTo(0,sy);
+    if(ro&&findEv(ro)){openDetail(ro);homeY=sy}
+  }catch(e){}
   if(pass)sync(true);
   else{
     try{const st=await api("GET","status");showGate(!!st.claimed)}
