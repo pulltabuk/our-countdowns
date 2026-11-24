@@ -103,7 +103,7 @@ form.autoedit [data-own]{display:none!important}
 .pi{width:1.25em;height:1.25em;vertical-align:-.28em;display:inline-block}
 .vis{display:inline-block;align-self:flex-start;font-size:.875rem;font-weight:700;border-radius:999px;padding:7px 14px;box-shadow:0 0 0 1.5px var(--ink) inset;margin-top:4px}
 .detail .when{font-weight:700;font-size:1.0625rem;opacity:1}
-.lrow .ttl{font-size:1.25rem;overflow-wrap:break-word;hyphens:auto}
+.lrow .ttl{font-size:1.25rem;overflow-wrap:break-word}
 .lrow .when{font-size:.875rem}
 
 .lrow .side{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 16px 12px 0;text-align:center}
@@ -135,7 +135,7 @@ form.autoedit [data-own]{display:none!important}
 
 .tick{font-variant-numeric:tabular-nums;font-size:.8125rem;font-weight:600;opacity:.85}
 .pips{display:flex;gap:3px;margin-top:6px;width:100%;max-width:190px}
-.pips i{flex:1;height:9px;border-radius:3px;background:var(--ink);opacity:.22;display:block}
+.pips i{flex:1;height:9px;border-radius:3px;background:#000;opacity:.25;display:block}
 .pips i.on{opacity:1}
 .pcap{font-size:.75rem;font-weight:600;opacity:.85;display:block}
 .ft{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
@@ -542,7 +542,7 @@ function words(ev,I){
 function tagText(I){
   if(I.state==="today")return"It's here";
   if(I.state==="milestone")return"Milestone";
-  if(I.state==="final")return I.days===1?"Tomorrow":I.days===7?"One week":"Final ten countdown";
+  if(I.state==="final")return I.days===1?"Tomorrow":I.days===7?"One week":"Final 10 Days";
   return"";
 }
 function pips(n){let h='<span class="pips" aria-hidden="true">';for(let i=10;i>=1;i--)h+='<i class="'+(i<=n?"on":"")+'"></i>';return h+'</span><span class="pcap">'+n+" of the last 10 days left</span>"}
@@ -1163,7 +1163,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795467975";
+const BUILD="1795506548";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
