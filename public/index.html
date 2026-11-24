@@ -368,6 +368,71 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 .st-sn{stroke:#FFE08A}.st-ac{stroke:#F2583A}.st-cr{stroke:#FFF1D0}
 .pt{font-family:var(--display);font-weight:800;fill:#20143A}
 
+/* ---------- narrow screens: phones with enlarged text or display zoom show fewer CSS pixels ---------- */
+@media (max-width:22.4em){
+  .app{gap:18px}
+  .head{flex-wrap:wrap}
+  h1{font-size:1.7rem}
+  .sq{width:50px;height:50px}
+  .pick select{padding:0 10px;font-size:15px}
+  .lrow .pz{width:50px;margin-left:12px}
+  .lrow .body{padding:14px 8px 14px 12px}
+  .lrow .ttl{font-size:1.1rem}
+  .lrow .side{padding:10px 12px 10px 0;gap:8px}
+  .flap b{width:25px;height:42px;font-size:1.65rem}
+  .flap.d4 b{width:20px;height:36px;font-size:1.3rem}
+  .lrow .unit{font-size:.625rem}
+  .big .pz{width:76px;margin-left:14px}
+  .big .ttl{font-size:1.3rem}
+  .big .body{padding:16px 12px 8px 18px}
+  .big .side{padding:0 12px 18px 18px}
+  .big .flap b{width:34px;height:56px;font-size:2.3rem}
+  .big .flap.d4 b{width:26px;height:46px;font-size:1.8rem}
+  .dwrap{padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+  .detail .ttl{font-size:1.8rem}
+  .dtop{gap:14px}
+  .detail .dtop .pz{max-width:112px}
+  .dtop .cnt{padding-left:0;gap:10px}
+  .dtop .flap b{width:50px;height:80px;font-size:3.4rem;border-radius:11px}
+  .dtop .flap.n3 b{width:40px;height:66px;font-size:2.7rem}
+  .dtop .flap.n4 b{width:30px;height:52px;font-size:2rem}
+  .sec{padding:18px 14px}
+  .sec h3{font-size:1.2rem}
+  .live{gap:6px}.live b{font-size:1.55rem}.live b.sm{font-size:1.1rem}.live span{font-size:.5625rem;letter-spacing:.02em}
+  .stats{grid-template-columns:1fr}
+  .stat{flex-direction:row;align-items:baseline;gap:10px;padding:12px 14px}
+  .stat span.wk.two br{display:none}.stat span.wk.two{white-space:normal}
+  .ft{grid-template-columns:repeat(5,1fr);gap:6px}
+  .tl-ends{font-size:.8125rem}
+  .mapcap{flex-direction:column;align-items:flex-start}
+  .tadd .bigbtn{padding:0 16px}
+  .icons{grid-template-columns:repeat(5,1fr)}
+  .seg button{font-size:.9rem;padding:14px 4px}
+  .tr{grid-template-columns:repeat(2,1fr)}
+  .panel{padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+}
+@media (max-width:19em){
+  .tools{grid-template-columns:1fr}
+  .card.lrow{flex-wrap:wrap}
+  .lrow .pz{margin-top:14px}
+  .lrow .body{flex:1 1 0}
+  .lrow .side{flex:1 1 100%;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;padding:14px 14px 14px 14px}
+  .card.big{display:flex}
+  .big .pz{width:60px}
+  .dtop{flex-direction:column;align-items:flex-start}
+  .dtop .cnt{align-items:flex-start}
+  .detail .dtop .pz{width:120px;max-width:none}
+  .live{grid-template-columns:repeat(2,1fr)}
+  .seg{grid-template-columns:1fr}
+  .two{grid-template-columns:1fr}
+  .icons{grid-template-columns:repeat(4,1fr)}
+  .swatches{grid-template-columns:repeat(4,1fr)}
+  .trow{flex-wrap:wrap}
+  .tl-ends{flex-direction:column;gap:2px}
+  .byline,.claim,.picked,.sugg,.merow{flex-wrap:wrap}
+  .dbar .chip{padding:12px 16px}
+}
+
 #fx{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -469,6 +534,11 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
     <label class="check" for="f-repeat" data-own><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
+    <div class="fld" data-own id="f-me-wrap" hidden><label for="f-myname">Your name</label>
+      <input class="inp" id="f-myname" maxlength="24" autocomplete="given-name" autocapitalize="words">
+      <p class="hint">So the event shows who added it. You only need to do this once; add a photo later from the menu.</p></div>
+    <div class="fld" data-own id="f-by-wrap" hidden><label for="f-by">Added by</label><select class="inp" id="f-by"></select></div>
+    <div class="fld" data-own id="f-added-wrap" hidden><label for="f-added">Added on</label><input class="inp" id="f-added" type="date"></div>
     <div class="fld" data-own><label for="f-note">Note (optional)</label><textarea class="inp" id="f-note" rows="2" maxlength="200" placeholder="Flights booked, passports checked"></textarea></div>
     <div class="err" id="f-err" hidden></div>
     <div class="acts">
@@ -799,7 +869,7 @@ function renderDetail(ev){
   if(I.state!=="today"&&I.state!=="past"){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    const tiles='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?"<br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
+    const tiles='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?" <br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
     h+=liveSec(ev,real.t,tiles);
     const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
     let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
@@ -829,7 +899,7 @@ function renderDetail(ev){
   if(ev.note)h+='<div class="sec"><h3>Note</h3><div class="small">'+esc(ev.note)+"</div></div>";
   if(ev.auto)h+='<div class="byline"><span class="autob">'+AUTO+"</span><div><b>Added automatically</b><span>"+(ev.kind==="bank"?"A UK bank holiday, from the government's published list":"An interesting date in the UK calendar")+"</span></div></div>";
   else if(profiles[ev.by])h+='<div class="byline">'+avatar(ev.by,"lg")+"<div><b>Added by "+esc(profiles[ev.by].name)+"</b>"+(ev.createdAt?"<span>on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+"</span>":"")+"</div></div>";
-  else if(me&&profiles[me]&&!ev.by)h+='<div class="claim"><span>Nobody is recorded as adding this one.</span><button type="button" class="chip" data-claim>I added this</button></div>';
+  else h+='<div class="claim"><span>'+(ev.createdAt?"Added on "+new Date(ev.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+". ":"")+"Nobody is recorded as adding this one.</span>"+(me&&profiles[me]?'<button type="button" class="chip" data-claim>I added this</button>':"")+"</div>";
   h+="</div>";
   const typed=($("t-new")||{}).value||"";
   el.innerHTML=h;el.scrollTop=keep;if(typed&&$("t-new"))$("t-new").value=typed;
@@ -920,6 +990,11 @@ function openEditor(ev,from){
   if(!canWrite)return;
   back=from||null;history.pushState({oc:1},"");
   editing=ev?ev.id:null;const now=new Date(),pad=n=>String(n).padStart(2,"0");
+  $("f-me-wrap").hidden=!!me||!!ev;$("f-myname").value="";
+  $("f-by-wrap").hidden=!ev||!!ev.auto;$("f-added-wrap").hidden=!ev||!!ev.auto||!ev.createdAt;
+  $("f-by").innerHTML='<option value="">Nobody recorded</option>'+Object.keys(profiles).map(id=>'<option value="'+esc(id)+'">'+esc(profiles[id].name)+(id===me?" (you)":"")+"</option>").join("");
+  $("f-by").value=ev&&profiles[ev.by]?ev.by:"";
+  if(ev&&ev.createdAt){const c=new Date(ev.createdAt);$("f-added").value=c.getFullYear()+"-"+pad(c.getMonth()+1)+"-"+pad(c.getDate())}else $("f-added").value="";
   draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||"",priv:!!ev.priv,auto:!!ev.auto}:{mode:"day",icon:"⭐",transport:"",priv:false,color:COLORS[events.length%COLORS.length].id};
   $("form-title").textContent=ev?(ev.auto?"Change how it looks":"Edit date"):"New date";$("form").classList.toggle("autoedit",!!(ev&&ev.auto));
   $("f-title").value=ev?ev.title:"";
@@ -987,7 +1062,17 @@ $("form").addEventListener("submit",async e=>{
   if(draft.mode==="day"){const v=$("f-date").value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return fail("Pick the date, or choose No, just the month.");[y,m,d]=v.split("-").map(Number)}
   else{y=+$("f-year").value;m=+$("f-month").value}
   const old=editing&&events.find(x=>x.id===editing);
-  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?old.by||"":me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
+  if(!old&&!me){
+    const nm=$("f-myname").value.trim();if(!nm)return fail("Add your name so the event shows who added it.");
+    const pid="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    profiles[pid]={name:nm,photo:""};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}
+    setMe(pid);send("PUT","profiles/"+pid,{name:nm,photo:""}).catch(()=>{});
+  }
+  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?$("f-by").value:me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
+  if(old&&old.createdAt&&/^\d{4}-\d{2}-\d{2}$/.test($("f-added").value)){
+    const c=new Date(old.createdAt),v=$("f-added").value.split("-").map(Number);
+    if(c.getFullYear()!==v[0]||c.getMonth()+1!==v[1]||c.getDate()!==v[2])body.createdAt=new Date(v[0],v[1]-1,v[2],12).getTime();
+  }
   $("f-save").disabled=true;$("f-save").textContent="Saving";
   body.loc=$("f-loc").value.trim();body.lat=null;body.lon=null;body.addr="";
   if(body.loc){
@@ -1185,7 +1270,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795528232";
+const BUILD="1795550838";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
