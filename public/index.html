@@ -709,14 +709,14 @@ Object.assign(ART,{
  fireworks:()=>'<rect class="dk" width="120" height="160"/>'+burst(38,46,26,"st-sn")+burst(86,34,20,"st-ac")+burst(74,84,24,"st-cr")+dots([[38,46],[86,34],[74,84]],"cr",2.500)+dots([[12,20],[108,70],[20,90],[56,18],[104,12]],"cr",1.200)+'<path class="mi" d="M0 160v-38h10v-8h8v8h8v-16h12v12h10v-22h6v-8h4v8h6v26h10v-10h14v10h8v-18h12v20h12v36z"/><path class="sn" d="M12 134h2v3h-2zm32-8h2v3h-2zm16-12h2v3h-2zm0 8h2v3h-2zm38 4h2v3h-2zm8 8h2v3h-2z"/>'
 });
 function posterHTML(ev,titled){
-  let h='<span class="pz" aria-hidden="true"><svg viewBox="0 0 120 160"><rect class="sk" width="120" height="160"/>'+ART[sceneOf(ev)]();
+  let h='<span class="pz" aria-hidden="true"><svg viewBox="0 0 120 160"><rect class="sk" width="120" height="160"/>';
   if(titled){
-    /* the name sits in a cream band, on two lines when long, kept clear of the corner badges */
+    /* the name sits in a cream band across the top (two lines when long); the picture starts below it */
     const t=String(ev.title||"").toUpperCase().replace(/\s+/g," ").trim().slice(0,30),ws=t.split(" ");let lines=[t];
-    if(t.length>9&&ws.length>1){let best=1,gap=1e9;for(let i=1;i<ws.length;i++){const g=Math.abs(ws.slice(0,i).join(" ").length-ws.slice(i).join(" ").length);if(g<gap){gap=g;best=i}}lines=[ws.slice(0,best).join(" "),ws.slice(best).join(" ")]}
-    const two=lines.length>1,fs=two?11:13,line=(x,y)=>'<text class="pt" x="60" y="'+y+'" text-anchor="middle" font-size="'+fs+'"'+(x.length*fs*.66>74?' textLength="74" lengthAdjust="spacingAndGlyphs"':' letter-spacing="1"')+">"+esc(x)+"</text>";
-    h+='<rect class="cr" y="'+(two?120:132)+'" width="120" height="'+(two?40:28)+'"/>'+(two?line(lines[0],135)+line(lines[1],150):line(t,151));
-  }
+    if(t.length>11&&ws.length>1){let best=1,gap=1e9;for(let i=1;i<ws.length;i++){const g=Math.abs(ws.slice(0,i).join(" ").length-ws.slice(i).join(" ").length);if(g<gap){gap=g;best=i}}lines=[ws.slice(0,best).join(" "),ws.slice(best).join(" ")]}
+    const two=lines.length>1,fs=two?11:13,B=two?38:28,line=(x,y)=>'<text class="pt" x="60" y="'+y+'" text-anchor="middle" font-size="'+fs+'"'+(x.length*fs*.66>100?' textLength="100" lengthAdjust="spacingAndGlyphs"':' letter-spacing="1"')+">"+esc(x)+"</text>";
+    h+='<g transform="translate(0,'+B+')">'+ART[sceneOf(ev)]()+'</g><rect class="cr" width="120" height="'+B+'"/>'+(two?line(lines[0],16)+line(lines[1],31):line(t,19));
+  }else h+=ART[sceneOf(ev)]();
   return h+"</svg>"+(ev.icon?"<em>"+esc(ev.icon)+"</em>":"")+(TR_ICON[ev.transport]&&TR_ICON[ev.transport]!==ev.icon?'<em class="tp">'+TR_ICON[ev.transport]+"</em>":"")+"</span>";
 }
 
@@ -1297,7 +1297,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795564080";
+const BUILD="1795564226";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
