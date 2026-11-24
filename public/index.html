@@ -534,9 +534,10 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
     <label class="check" for="f-repeat" data-own><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
-    <div class="fld" data-own id="f-me-wrap" hidden><label for="f-myname">Your name</label>
-      <input class="inp" id="f-myname" maxlength="24" autocomplete="given-name" autocapitalize="words">
-      <p class="hint">So the event shows who added it. You only need to do this once; add a photo later from the menu.</p></div>
+    <div class="fld" data-own id="f-me-wrap" hidden><label for="f-who">Who is adding this?</label>
+      <select class="inp" id="f-who"></select>
+      <input class="inp" id="f-myname" maxlength="24" autocomplete="given-name" autocapitalize="words" placeholder="Your name" aria-label="Your name">
+      <p class="hint">So the event shows who added it. You only need to do this once on each phone.</p></div>
     <div class="fld" data-own id="f-by-wrap" hidden><label for="f-by">Added by</label><select class="inp" id="f-by"></select></div>
     <div class="fld" data-own id="f-added-wrap" hidden><label for="f-added">Added on</label><input class="inp" id="f-added" type="date"></div>
     <div class="fld" data-own><label for="f-note">Note (optional)</label><textarea class="inp" id="f-note" rows="2" maxlength="200" placeholder="Flights booked, passports checked"></textarea></div>
@@ -991,6 +992,9 @@ function openEditor(ev,from){
   back=from||null;history.pushState({oc:1},"");
   editing=ev?ev.id:null;const now=new Date(),pad=n=>String(n).padStart(2,"0");
   $("f-me-wrap").hidden=!!me||!!ev;$("f-myname").value="";
+  const known=Object.keys(profiles);
+  $("f-who").innerHTML=(known.length?'<option value="">Choose your name</option>':"")+known.map(id=>'<option value="'+esc(id)+'">'+esc(profiles[id].name)+"</option>").join("")+'<option value="new">Someone new</option>';
+  $("f-who").value=known.length?"":"new";$("f-who").hidden=!known.length;$("f-myname").hidden=!!known.length;
   $("f-by-wrap").hidden=!ev||!!ev.auto;$("f-added-wrap").hidden=!ev||!!ev.auto||!ev.createdAt;
   $("f-by").innerHTML='<option value="">Nobody recorded</option>'+Object.keys(profiles).map(id=>'<option value="'+esc(id)+'">'+esc(profiles[id].name)+(id===me?" (you)":"")+"</option>").join("");
   $("f-by").value=ev&&profiles[ev.by]?ev.by:"";
@@ -1035,6 +1039,7 @@ $("f-loc-sug").addEventListener("click",e=>{
 });
 $("f-time-clear").addEventListener("click",()=>{$("f-time").value="";syncForm()});
 ["input","change"].forEach(k=>$("f-time").addEventListener(k,()=>syncForm()));
+$("f-who").addEventListener("change",()=>{$("f-myname").hidden=$("f-who").value!=="new"});
 $("f-vis-all").addEventListener("click",()=>{draft.priv=false;syncForm()});
 $("f-vis-me").addEventListener("click",()=>{draft.priv=true;syncForm()});
 $("f-mode-day").addEventListener("click",()=>{draft.mode="day";syncForm()});
@@ -1063,10 +1068,15 @@ $("form").addEventListener("submit",async e=>{
   else{y=+$("f-year").value;m=+$("f-month").value}
   const old=editing&&events.find(x=>x.id===editing);
   if(!old&&!me){
+    const who=$("f-who").value;
+    if(!who)return fail("Choose your name so the event shows who added it.");
+    if(profiles[who])setMe(who);
+    else{
     const nm=$("f-myname").value.trim();if(!nm)return fail("Add your name so the event shows who added it.");
     const pid="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     profiles[pid]={name:nm,photo:""};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}
     setMe(pid);send("PUT","profiles/"+pid,{name:nm,photo:""}).catch(()=>{});
+    }
   }
   const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?$("f-by").value:me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
   if(old&&old.createdAt&&/^\d{4}-\d{2}-\d{2}$/.test($("f-added").value)){
@@ -1270,7 +1280,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795550838";
+const BUILD="1795562889";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
