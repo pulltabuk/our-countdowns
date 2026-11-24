@@ -199,7 +199,8 @@ form.autoedit [data-own]{display:none!important}
 .dtop{display:flex;align-items:center;gap:24px}
 .detail .dtop .pz{width:38%;max-width:150px;margin:0 0 0 6px;flex:none;align-self:center}
 .detail .dtop .pz svg{border-radius:8px;box-shadow:0 0 0 4px #FFF1D0,0 4px 0 4px rgba(0,0,0,.18)}
-.detail .dtop .pz em{font-size:2.1rem;right:-14px;bottom:auto;top:-14px}
+.detail .dtop .pz em{font-size:2.1rem;right:-14px;top:auto;bottom:-32px}
+.detail .dtop .pz{margin-bottom:28px}
 .detail .dtop .pz em.tp{right:auto;left:-14px}
 .dtop .cnt{min-width:0;flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;padding-left:8px}
 .dtop .flap{gap:5px}
@@ -403,7 +404,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   .live{gap:6px}.live b{font-size:1.55rem}.live b.sm{font-size:1.1rem}.live span{font-size:.5625rem;letter-spacing:.02em}
   .stats{grid-template-columns:1fr}
   .stat{flex-direction:row;align-items:baseline;gap:10px;padding:12px 14px}
-  .stat span.wk.two br{display:none}.stat span.wk.two{white-space:normal}
+  .stat span.wk br{display:none}
   .ft{grid-template-columns:repeat(5,1fr);gap:6px}
   .tl-ends{font-size:.8125rem}
   .mapcap{flex-direction:column;align-items:flex-start}
@@ -872,7 +873,7 @@ function renderDetail(ev){
   if(I.state!=="today"&&I.state!=="past"){
     let wk=0;const n=Math.min(I.days,4000),base=sod(now);
     for(let i=1;i<=n;i++){if(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i).getDay()===6)wk++}
-    const tiles='<div class="stats"><div class="stat"><span class="wk two'+(I.days>=700?" long":"")+'">'+(I.days>=7?Math.floor(I.days/7)+(I.days<14?" week":" weeks")+(I.days%7?" <br>"+I.days%7+(I.days%7===1?" day":" days"):""):I.days+(I.days===1?" day":" days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
+    const tiles='<div class="stats"><div class="stat"><b'+(I.days>=7000?' class="sm"':"")+">"+(I.days>=7?Math.floor(I.days/7):I.days)+'</b><span class="wk">'+(I.days>=7?(I.days<14?"week":"weeks")+(I.days%7?" <br>"+I.days%7+(I.days%7===1?" day":" days"):""):(I.days===1?"day":"days"))+"</span></div>"+'<div class="stat"><b'+(String(wk).length>3?' class="sm"':"")+">"+wk+'</b><span class="wk">'+(wk===1?"weekend":"weekends")+"</span>"+'</div><div class="stat"><b'+(I.days*24>=100000?' class="xs"':I.days*24>=10000?' class="sm"':"")+">"+(I.days*24).toLocaleString()+"</b><span class=\"wk\">hours</span></div></div>";
     h+=liveSec(ev,real.t,tiles);
     const DAY=864e5,tEnd=real.t.getTime(),addT=!ev.auto&&ev.createdAt?sod(new Date(ev.createdAt)).getTime():0;
     let t0=ev.auto?ev.prevT:addT;if(!ev.auto&&t0&&ev.repeat&&t0<tEnd-366*DAY)t0=new Date(real.t.getFullYear()-1,real.t.getMonth(),real.t.getDate()).getTime();
@@ -1291,7 +1292,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795563440";
+const BUILD="1795563713";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
