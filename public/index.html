@@ -292,7 +292,8 @@ form.autoedit [data-own]{display:none!important}
 .detail{min-height:100vh;background:var(--c);color:var(--ink)}
 .dwrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:20px;animation:rise .35s ease-out;
   padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
-.dbar{display:flex;justify-content:space-between;gap:10px}
+.dbar{display:flex;justify-content:space-between;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--c);margin:-14px -20px 0;padding:10px 20px;box-shadow:0 1.5px 0 color-mix(in srgb,var(--ink) 16%,transparent)}
+.dbar .chip{padding:8px 18px;min-height:40px;font-size:.95rem}
 .chip{border-radius:999px;padding:13px 24px;font-weight:700;font-size:1.0625rem;min-height:50px;box-shadow:0 0 0 1.5px var(--ink) inset;white-space:nowrap}
 .chip.on{background:var(--ink);color:var(--c)}
 .dhead{position:relative;display:flex;flex-direction:column;gap:10px}
@@ -405,6 +406,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   .big .flap b{width:34px;height:56px;font-size:2.3rem}
   .big .flap.d4 b{width:26px;height:46px;font-size:1.8rem}
   .dwrap{padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+  .dbar{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}
   .detail .ttl{font-size:1.8rem}
   .dtop{gap:14px}
   .detail .dtop .pz{max-width:112px}
@@ -446,7 +448,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   .trow{flex-wrap:wrap}
   .tl-ends{flex-direction:column;align-items:flex-start;gap:6px}
   .byline,.claim,.picked,.sugg,.merow{flex-wrap:wrap}
-  .dbar .chip{padding:12px 16px}
+  .dbar .chip{padding:8px 14px}
 }
 
 #fx{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
@@ -1358,7 +1360,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795604154";
+const BUILD="1795604886";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
@@ -1370,7 +1372,8 @@ async function checkUpdate(force){
       let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
       if(!force&&n>=3)return;
       const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
-      if(!r.ok||html.indexOf('const BUILD="1795604154"')<0)return;
+      /* the new page must carry the new number; the text is split so the stamping script can never rewrite this line */
+      if(!r.ok||html.indexOf("const BU"+"ILD="+JSON.stringify(v)+";")<0)return;
       if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
       try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
       location.reload();
