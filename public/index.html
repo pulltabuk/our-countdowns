@@ -651,6 +651,7 @@ function words(ev,I){
   if(I.state==="today")return ev.mode==="month"
     ?{num:I.t.toLocaleDateString(undefined,{month:"long"}),word:true,unit:"has arrived. Time for"}
     :{num:"Today",word:true,unit:"is the day for"};
+  if(I.state==="past")return{num:String(-I.days),word:false,unit:I.days===-1?"day since":"days since"};
   return{num:String(I.days),word:false,unit:I.days===1?"sleep until":"days until"};
 }
 function tagText(I){
@@ -886,7 +887,7 @@ function render(){
       :'<div class="empty"><b>Nothing to show here</b><p>'+(view.show==="mine"?"You have no private events. Choose Everything to see the shared ones.":"Every event is private. Choose Everything to see them.")+"</p></div>";
   }
   $("mem").hidden=!past.length;
-  $("mem-rows").innerHTML=past.map(a=>rowHTML(a.ev,(-a.I.days)+(a.I.days===-1?" day ago":" days ago"),canWrite?"Edit":"")).join("");
+  $("mem-rows").innerHTML=past.map(a=>rowHTML(a.ev,(-a.I.days)+(a.I.days===-1?" day ago":" days ago"),"View")).join("");
   $("quick-add").hidden=!canWrite;
   renderManage();
   if(openId){const ev=findEv(openId);if(ev)renderDetail(ev);else closeDetail()}
@@ -924,7 +925,8 @@ function renderDetail(ev){
   const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean);
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
   h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="thead"><span class="ttl">'+esc(ev.title)+(flagsOf(ev).length?' <span class="lf">'+flagsOf(ev).map(flagOf).join(" ")+"</span>":"")+"</span>"+(ev.icon?'<em class="stk">'+esc(ev.icon)+"</em>":"")+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+"</span>"+(facts.length?'<span class="facts">'+facts.map(f=>"<i>"+esc(f)+"</i>").join("")+"</span>":"")+"</div>";
-  h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
+  h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):I.state==="past"?(I.days===-1?"day ago":"days ago"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
+  if(I.state==="past")h+='<div class="shout">A memory. '+(ev.mode==="month"?"This was in ":"This happened on ")+esc(whenText(ev,real.t))+".</div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t,""):"");
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
   if(I.state==="final")h+=finalTrack(I.days);
@@ -954,7 +956,7 @@ function renderDetail(ev){
         return'<div class="'+st+'"><b>'+(st==="gone"?TICK:"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"+"</div>"}
   }
   if(ev.loc)h+=mapHTML(ev);
-  if(I.state!=="past"){
+  if(I.state!=="past"||(Array.isArray(ev.todo)&&ev.todo.length)){
     const todo=Array.isArray(ev.todo)?ev.todo:[],dn=todo.filter(t=>t.done).length;
     h+='<div class="sec"><h3>Things to remember and do</h3><div class="todo">'+todo.map(t=>'<div class="ti'+(t.done?" done":"")+'"><button type="button" class="tk" data-tk="'+esc(t.id)+'" aria-label="Tick off">'+(t.done?"✓":"")+"</button><span>"+esc(t.text)+(t.dueAt?'<small class="due'+(!t.done&&t.dueAt<Date.now()?" late":"")+'">'+BELL+" "+esc(dueLabel(t))+"</small>":"")+"</span>"+avatar(t.by,"sm")+'<button type="button" class="tb'+(t.dueAt?" on":"")+'" data-tb="'+esc(t.id)+'" aria-label="'+(t.dueAt?"Change the reminder":"Add a reminder")+'">'+BELL+'</button><button type="button" class="tx" data-tx="'+esc(t.id)+'" aria-label="Remove">✕</button></div>'
       +(remOpen===t.id?'<form class="rem" data-rem="'+esc(t.id)+'"><b>Remind us about this</b><div class="remrow"><label>Date<input class="inp" id="rem-d" type="date" value="'+esc(t.due||"")+'"></label><label>Time (optional)<input class="inp" id="rem-t" type="time" value="'+esc(t.dueTime||"")+'"></label></div><div class="small">A notification is sent to phones with notifications turned on. With no time, it comes at 9 in the morning.</div><div class="remrow"><button class="bigbtn" type="submit">Save reminder</button>'+(t.dueAt?'<button type="button" class="chip" data-remclear="'+esc(t.id)+'">Remove</button>':"")+'<button type="button" class="chip" data-remclose>Cancel</button></div></form>':"")).join("")+"</div>"
@@ -1028,7 +1030,7 @@ $("wall").addEventListener("click",e=>{
   const c=e.target.closest(".card");if(c)openDetail(c.dataset.id);
 });
 function rowClick(e,from){const r=e.target.closest("[data-edit]");if(!r||!canWrite)return;const ev=events.find(x=>x.id===r.dataset.edit);if(ev)openEditor(ev,from)}
-$("mem-rows").addEventListener("click",e=>rowClick(e));
+$("mem-rows").addEventListener("click",e=>{const r=e.target.closest("[data-edit]");if(r)openDetail(r.dataset.edit)});
 $("manage-rows").addEventListener("click",e=>rowClick(e,"manage"));
 let back=null;
 function closeEditor(){$("editor").hidden=true;if(back==="manage")$("manage").hidden=false;back=null;lock()}
@@ -1404,7 +1406,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795612724";
+const BUILD="1795631378";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
