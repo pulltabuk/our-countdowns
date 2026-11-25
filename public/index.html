@@ -587,8 +587,8 @@ const COLORS=[
 const ICONS=["✈️","🏝️","🏖️","🏔️","🎿","⛺","🚗","🚢","🧳","🌍","🏙️","🗽","🎡","🎄","🎃","🎁","🎂","🎉","🥂","💍","❤️","👶","🐶","🏡","🔑","🎓","💼","💰","🎸","🎟️","🎬","🍽️","⚽","🏃","🌸","☀️","🍂","❄️","⭐","🌙","🕯️","🚆","🚌"];
 const TRANSPORT=[["","None"],["plane","✈️ Plane"],["train","🚆 Train"],["car","🚗 Car"],["boat","🚢 Boat"],["coach","🚌 Coach"]];
 const TR_ICON={plane:"✈️",train:"🚆",car:"🚗",boat:"🚢",coach:"🚌"};
-const MILESTONES=[300,200,100,75,50,25];
-const SPECIAL={300:"Three hundred days exactly",200:"Two hundred on the dot",100:"One hundred days. Double digits start tomorrow.",75:"Seventy-five to go",50:"Fifty days. Halfway down from a hundred.",25:"Twenty-five left",
+const MILESTONES=[500,300,200,100,75,50,25];
+const SPECIAL={500:"Five hundred days exactly",300:"Three hundred days exactly",200:"Two hundred on the dot",100:"One hundred days. Double digits start tomorrow.",75:"Seventy-five to go",50:"Fifty days. Halfway down from a hundred.",25:"Twenty-five left",
  10:"Final ten countdown",9:"Single digits",8:"Eight sleeps",7:"One week exactly",6:"Six sleeps",5:"Five. Count them on one hand.",4:"Four sleeps",3:"Three sleeps",2:"Two sleeps",1:"Tomorrow!"};
 const KEY="oc.events.v1";
 const $=id=>document.getElementById(id);
@@ -909,7 +909,7 @@ function renderDetail(ev){
       const span=tEnd-t0;
       if(span>=2*DAY){
         const pc=Math.max(0,Math.min(100,(sod(now).getTime()-t0)/span*100)),fmt=d=>new Date(d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
-        let k=0,lastX=-99;const marks=[300,200,100,75,50,25,10].map(m=>({m,x:(tEnd-m*DAY-t0)/span*100})).filter(o=>o.x>2&&o.x<99).filter(o=>{if(o.x-lastX<7)return false;lastX=o.x;return true})
+        let k=0,lastX=-99;const marks=[500,300,200,100,75,50,25,10].map(m=>({m,x:(tEnd-m*DAY-t0)/span*100})).filter(o=>o.x>2&&o.x<99).filter(o=>{if(o.x-lastX<7)return false;lastX=o.x;return true})
           .map(o=>'<span class="tl-m '+(k++%2?"dn":"up")+(o.m>=I.days?" past":"")+'" style="left:'+o.x.toFixed(2)+'%"><b>'+o.m+"</b></span>").join("");
         h+='<div class="sec"><h3>Timeline</h3><div class="tl"><div class="tl-track"><i class="tl-fill" style="width:'+pc.toFixed(2)+'%"></i>'+marks+'<span class="tl-now" style="left:'+pc.toFixed(2)+'%"></span></div>'
           +'<div class="tl-day">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+"</div>"
@@ -918,7 +918,7 @@ function renderDetail(ev){
           +(marks?'<div class="small">Numbered marks are the special days.</div>':"")+"</div>";
       }
     }
-    const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
+    const ahead=[500,300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
     if(ahead.length){
       h+='<div class="sec"><h3>Special days</h3><div class="ahead">'+ahead.map(o=>{const st=o.m>I.days?"gone":o.m===I.days?"now":"";
         return'<div class="'+st+'"><b>'+(st==="gone"?TICK:"")+(o.m===10?"Final 10 Days":o.m+" days to go")+"</b><span>"+(st==="now"?"Today":o.nd.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}))+"</span></div>"}).join("")+"</div>"+"</div>"}
@@ -1358,7 +1358,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795603940";
+const BUILD="1795604154";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
@@ -1370,7 +1370,7 @@ async function checkUpdate(force){
       let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
       if(!force&&n>=3)return;
       const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
-      if(!r.ok||html.indexOf('const BUILD="1795603940"')<0)return;
+      if(!r.ok||html.indexOf('const BUILD="1795604154"')<0)return;
       if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
       try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
       location.reload();
