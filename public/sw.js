@@ -11,7 +11,7 @@ self.addEventListener("fetch", (e) => {
   const own = u.origin === self.location.origin;
   const font = /(^|\.)fonts\.(googleapis|gstatic)\.com$/.test(u.hostname);
   if (!own && !font) return;
-  if (own && (u.pathname.startsWith("/api") || u.pathname === "/version.json" || u.pathname === "/sw.js")) return;
+  if (own && (u.pathname.startsWith("/api") || u.pathname === "/version.json" || u.pathname === "/sw.js" || u.searchParams.has("fresh"))) return;
   const key = own && (req.mode === "navigate" || u.pathname === "/") ? "/" : req;
   e.respondWith(
     caches.open(C).then(async (c) => {

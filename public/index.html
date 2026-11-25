@@ -1305,16 +1305,21 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795564774";
+const BUILD="1795565236";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
-    let tried="";try{tried=sessionStorage.getItem("oc.tried")||""}catch(e){}
     /* never pull the page out from under someone who is filling something in; try again on the next check */
     const busy=!$("editor").hidden||!$("profile").hidden||!$("gate").hidden||!!((($("t-new")||{}).value||"")+(($("claim-name")||{}).value||"")).trim();
-    if(v&&v!==BUILD&&(force||(tried!==v&&!busy))){
-      try{sessionStorage.setItem("oc.tried",v);sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
-      try{await fetch("/",{cache:"reload"})}catch(e){}
+    if(v&&v!==BUILD&&(force||!busy)){
+      /* Fetch the new page ourselves and put it in the phone's saved copy before reloading, so the reload cannot
+         land on the old page. Give up after three goes per version so a fault can never cause a reload loop. */
+      let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
+      if(!force&&n>=3)return;
+      const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
+      if(!r.ok||html.indexOf('const BUILD="1795565236"')<0)return;
+      if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
+      try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
       location.reload();
     }
   }catch(e){}
