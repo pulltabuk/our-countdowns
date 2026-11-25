@@ -151,13 +151,19 @@ form.autoedit [data-own]{display:none!important}
 .tl-m.up b{bottom:100%;margin-bottom:3px}.tl-m.dn b{top:100%;margin-top:3px}
 .tl-m.past{opacity:.45}
 .tl-now{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 2.5px var(--ink);transform:translate(-50%,-50%)}
-.tl-ends{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:42px -12px 0;font-size:.875rem;font-weight:700}
+.tl-day{margin:30px -12px 0;font-family:var(--display);font-weight:800;font-size:1.15rem}
+.tl-ends{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px -12px 0;font-size:.875rem;font-weight:700}
 .tl-ends span{display:inline-flex;align-items:center;gap:10px}
 .tl-pct{font-weight:600;font-size:1rem}
 .tl-pct b{font-family:var(--display);font-size:1.9rem;font-weight:800;letter-spacing:-.02em;margin-right:6px}
 .stk{display:inline-grid;place-items:center;flex:none;width:48px;height:48px;border-radius:50%;background:#FFF1D0;box-shadow:0 0 0 2px #20143A,0 3px 0 2px rgba(0,0,0,.2);font-style:normal;font-size:1.6rem;line-height:1}
 .stk.sm{width:36px;height:36px;font-size:1.2rem}
 .thead{display:flex;align-items:center;gap:14px}
+.lf{white-space:nowrap}
+.fchips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;min-height:48px;font-weight:700;background:var(--fg);color:var(--bg)}
+.fchip span{font-size:1.4rem;line-height:1}.fchip i{font-style:normal;opacity:.7;margin-left:2px}
+.sug .fl{font-size:1.8rem;line-height:1;flex:none;width:36px;text-align:center}
 .mapbox{position:relative;display:block;height:190px;border-radius:20px;overflow:hidden;background:#E8E4D8;box-shadow:0 0 0 1.5px var(--ink)}
 .mapbox .tiles{position:absolute;left:50%;top:50%;width:0;height:0}
 .mapbox .tiles img{position:absolute;width:128px;height:128px;max-width:none;display:block}
@@ -544,6 +550,11 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <p class="hint" id="f-vis-hint"></p></div>
     <label class="check" for="f-important"><input type="checkbox" id="f-important"> Important (show twice as tall)</label>
     <label class="check" for="f-repeat" data-own><input type="checkbox" id="f-repeat"> Repeats every year (birthdays, anniversaries)</label>
+    <div class="fld" data-own><label for="f-flag-q">Country flags (up to 3)</label>
+      <div class="fchips" id="f-flags" hidden></div>
+      <input class="inp" id="f-flag-q" placeholder="Search for a country" autocomplete="off" autocapitalize="words">
+      <div class="sug" id="f-flag-res" hidden></div>
+      <p class="hint">For a trip, add each country you are visiting. They show on the event page.</p></div>
     <div class="fld" data-own id="f-me-wrap" hidden><label for="f-who">Who is adding this?</label>
       <select class="inp" id="f-who"></select>
       <input class="inp" id="f-myname" maxlength="24" autocomplete="given-name" autocapitalize="words" placeholder="Your name" aria-label="Your name">
@@ -747,7 +758,7 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+(hasTime(ev)?", "+ev.time:""))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+(hasTime(ev)?", "+ev.time:""))+(flagsOf(ev).length?' <span class="lf">'+flagsOf(ev).map(flagOf).join(" ")+"</span>":"")+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
@@ -880,9 +891,9 @@ function renderDetail(ev){
   detailStale=false;
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
-  const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean);
+  const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean).concat(flagsOf(ev).map(c=>flagOf(c)+" "+countryName(c)));
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="thead">'+(ev.icon?'<em class="stk">'+esc(ev.icon)+"</em>":"")+'<span class="ttl">'+esc(ev.title)+'</span></span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+"</span>"+(facts.length?'<span class="facts">'+facts.map(f=>"<i>"+esc(f)+"</i>").join("")+"</span>":"")+"</div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="thead"><span class="ttl">'+esc(ev.title)+"</span>"+(ev.icon?'<em class="stk">'+esc(ev.icon)+"</em>":"")+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+"</span>"+(facts.length?'<span class="facts">'+facts.map(f=>"<i>"+esc(f)+"</i>").join("")+"</span>":"")+"</div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t,""):"");
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -901,9 +912,10 @@ function renderDetail(ev){
         let k=0,lastX=-99;const marks=[300,200,100,75,50,25,10].map(m=>({m,x:(tEnd-m*DAY-t0)/span*100})).filter(o=>o.x>2&&o.x<99).filter(o=>{if(o.x-lastX<7)return false;lastX=o.x;return true})
           .map(o=>'<span class="tl-m '+(k++%2?"dn":"up")+(o.m>=I.days?" past":"")+'" style="left:'+o.x.toFixed(2)+'%"><b>'+o.m+"</b></span>").join("");
         h+='<div class="sec"><h3>Timeline</h3><div class="tl"><div class="tl-track"><i class="tl-fill" style="width:'+pc.toFixed(2)+'%"></i>'+marks+'<span class="tl-now" style="left:'+pc.toFixed(2)+'%"></span></div>'
+          +'<div class="tl-day">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+"</div>"
           +'<div class="tl-ends"><span>'+(t0!==addT?"Last time ":"Added ")+fmt(t0)+"</span><span>"+fmt(tEnd)+(ev.icon?'<em class="stk sm">'+esc(ev.icon)+"</em>":"")+"</span></div></div>"
           +'<div class="tl-pct"><b>'+(pc<10?(Math.round(pc*10)/10):Math.round(pc))+"%</b> of the way there</div>"
-          +'<div class="small">Day '+(Math.round((sod(now).getTime()-t0)/DAY)+1).toLocaleString()+" of "+(Math.round(span/DAY)+1).toLocaleString()+"."+(marks?" Numbered marks are the special days.":"")+"</div></div>";
+          +(marks?'<div class="small">Numbered marks are the special days.</div>':"")+"</div>";
       }
     }
     const ahead=[300,200,100,75,50,25,10].map(m=>({m,nd:new Date(real.t.getFullYear(),real.t.getMonth(),real.t.getDate()-m)})).filter(o=>o.m<=I.days||(t0&&o.nd.getTime()>=t0));
@@ -1031,7 +1043,7 @@ function openEditor(ev,from){
   $("f-by").innerHTML='<option value="">Nobody recorded</option>'+Object.keys(profiles).map(id=>'<option value="'+esc(id)+'">'+esc(profiles[id].name)+(id===me?" (you)":"")+"</option>").join("");
   $("f-by").value=ev&&profiles[ev.by]?ev.by:"";
   if(ev&&ev.createdAt){const c=new Date(ev.createdAt);$("f-added").value=c.getFullYear()+"-"+pad(c.getMonth()+1)+"-"+pad(c.getDate())}else $("f-added").value="";
-  draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||"",priv:!!ev.priv,auto:!!ev.auto}:{mode:"day",icon:"⭐",transport:"",priv:false,color:COLORS[events.length%COLORS.length].id};
+  draft=ev?{mode:ev.mode||"day",icon:ev.icon,color:ev.color,transport:ev.transport||"",priv:!!ev.priv,auto:!!ev.auto,flags:flagsOf(ev)}:{mode:"day",icon:"⭐",transport:"",priv:false,flags:[],color:COLORS[events.length%COLORS.length].id};
   $("form-title").textContent=ev?(ev.auto?"Change how it looks":"Edit date"):"New date";$("form").classList.toggle("autoedit",!!(ev&&ev.auto));
   $("f-title").value=ev?ev.title:"";
   $("f-date").value=ev&&ev.mode!=="month"?ev.y+"-"+pad(ev.m)+"-"+pad(ev.d):"";
@@ -1041,8 +1053,42 @@ function openEditor(ev,from){
   $("f-repeat").checked=!!(ev&&ev.repeat);$("f-important").checked=!!(ev&&ev.important);$("f-scene").value=ev&&SCENES.includes(ev.scene)?ev.scene:"auto";$("f-note").value=ev&&ev.note||"";
   $("f-err").hidden=true;$("f-delete").hidden=!ev||!!ev.auto;$("f-delete").textContent="Delete";delete $("f-delete").dataset.armed;
   $("f-save").disabled=false;$("f-save").textContent="Save";
+  $("f-flag-q").value="";$("f-flag-res").hidden=true;drawFlags();
   syncForm();$("manage").hidden=true;$("editor").hidden=false;$("editor").firstElementChild.scrollTop=0;lock();
 }
+/* ---------- country flags: up to three per event, found by typing the country's name ---------- */
+const CC="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(" ");
+const tagFlag=t=>String.fromCodePoint(0x1F3F4,...[...t].map(ch=>0xE0000+ch.charCodeAt(0)),0xE007F);
+const SUB={"GB-ENG":["England",tagFlag("gbeng")],"GB-SCT":["Scotland",tagFlag("gbsct")],"GB-WLS":["Wales",tagFlag("gbwls")]};
+const ALIAS={GB:"uk britain great britain united kingdom",US:"usa america united states",NL:"holland netherlands",AE:"uae dubai abu dhabi emirates",KR:"south korea",KP:"north korea",CZ:"czech republic czechia",TR:"turkey turkiye",CI:"ivory coast",CD:"congo drc",RU:"russia",VN:"vietnam",LA:"laos",SY:"syria",IR:"iran",TZ:"tanzania zanzibar",BO:"bolivia",VE:"venezuela",MD:"moldova",MK:"macedonia",CV:"cape verde",SZ:"swaziland eswatini",MM:"burma myanmar",TW:"taiwan",PS:"palestine",VA:"vatican",ES:"spain canaries tenerife majorca ibiza",GR:"greece crete",ID:"indonesia bali",IT:"italy sicily sardinia",PT:"portugal madeira algarve",FR:"france corsica",IE:"ireland eire",BA:"bosnia",HK:"hong kong",MO:"macau"};
+let regionNames=null;try{regionNames=new Intl.DisplayNames(["en-GB"],{type:"region"})}catch(e){}
+const okFlag=c=>typeof c==="string"&&(!!SUB[c]||CC.includes(c));
+const flagOf=c=>SUB[c]?SUB[c][1]:String.fromCodePoint(...[...c].map(ch=>0x1F1E6+ch.charCodeAt(0)-65));
+const countryName=c=>{if(SUB[c])return SUB[c][0];try{return(regionNames&&regionNames.of(c))||c}catch(e){return c}};
+const COUNTRIES=CC.concat(Object.keys(SUB)).map(c=>{const n=countryName(c);return{c,n,k:(n+" "+(ALIAS[c]||"")).toLowerCase()}}).sort((a,b)=>a.n.localeCompare(b.n));
+const flagsOf=ev=>(Array.isArray(ev.flags)?ev.flags:[]).filter(okFlag).slice(0,3);
+function findCountries(q){
+  q=q.trim().toLowerCase();if(q.length<2)return[];
+  const hit=COUNTRIES.filter(o=>o.k.includes(q)&&!((draft&&draft.flags)||[]).includes(o.c));
+  const rank=o=>o.k.split(" ").includes(q)&&!o.n.toLowerCase().startsWith(q)?0:o.n.toLowerCase().startsWith(q)?1:2;
+  return hit.sort((a,b)=>rank(a)-rank(b)||a.n.localeCompare(b.n)).slice(0,7);
+}
+function drawFlags(){
+  const fl=(draft&&draft.flags)||[];
+  $("f-flags").hidden=!fl.length;
+  $("f-flags").innerHTML=fl.map(c=>'<button type="button" class="fchip" data-rm="'+c+'" aria-label="Remove '+esc(countryName(c))+'"><span>'+flagOf(c)+"</span>"+esc(countryName(c))+"<i>✕</i></button>").join("");
+  const full=fl.length>=3;$("f-flag-q").disabled=full;$("f-flag-q").placeholder=full?"Three chosen: remove one to change":"Search for a country";
+  if(full){$("f-flag-q").value="";$("f-flag-res").hidden=true}
+}
+function drawFlagResults(){
+  const res=findCountries($("f-flag-q").value),box=$("f-flag-res");box.hidden=!res.length;
+  box.innerHTML=res.length?"<p>Tap a country to add its flag</p>"+res.map(o=>'<button type="button" data-add="'+o.c+'"><span class="fl">'+flagOf(o.c)+'</span><span class="pk"><b>'+esc(o.n)+"</b></span></button>").join(""):"";
+  if(res.length)$("f-flag-q").closest(".fld").scrollIntoView({block:"start",behavior:"smooth"});
+}
+$("f-flag-q").addEventListener("input",drawFlagResults);
+$("f-flag-res").addEventListener("click",e=>{const b=e.target.closest("[data-add]");if(!b)return;draft.flags=(draft.flags||[]).concat([b.dataset.add]).slice(0,3);$("f-flag-q").value="";$("f-flag-res").hidden=true;drawFlags()});
+$("f-flags").addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(!b)return;draft.flags=(draft.flags||[]).filter(c=>c!==b.dataset.rm);drawFlags();drawFlagResults()});
+
 /* place suggestions while typing */
 let locPick=null,locSeq=0,locTimer=0,locList=[];
 const PIN='<svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 31C5 21 1 16 1 11a11 11 0 0122 0c0 5-4 10-11 20z" fill="currentColor"/><circle cx="12" cy="11" r="4" fill="var(--surface)"/></svg>';
@@ -1110,7 +1156,7 @@ $("form").addEventListener("submit",async e=>{
     setMe(pid);send("PUT","profiles/"+pid,{name:nm,photo:""}).catch(()=>{});
     }
   }
-  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?$("f-by").value:me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
+  const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",flags:(draft.flags||[]).slice(0,3),priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?$("f-by").value:me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
   if(old&&old.createdAt&&/^\d{4}-\d{2}-\d{2}$/.test($("f-added").value)){
     const c=new Date(old.createdAt),v=$("f-added").value.split("-").map(Number);
     if(c.getFullYear()!==v[0]||c.getMonth()+1!==v[1]||c.getDate()!==v[2])body.createdAt=new Date(v[0],v[1]-1,v[2],12).getTime();
@@ -1312,7 +1358,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795565750";
+const BUILD="1795566370";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
@@ -1324,7 +1370,7 @@ async function checkUpdate(force){
       let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
       if(!force&&n>=3)return;
       const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
-      if(!r.ok||html.indexOf('const BUILD="1795565750"')<0)return;
+      if(!r.ok||html.indexOf('const BUILD="1795566370"')<0)return;
       if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
       try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
       location.reload();

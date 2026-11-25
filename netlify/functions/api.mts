@@ -29,6 +29,7 @@ function clean(b: Record<string, unknown>) {
     color: str(b.color, 16),
     scene: str(b.scene, 16),
     transport: str(b.transport, 12),
+    flags: (Array.isArray(b.flags) ? b.flags : []).map((f: unknown) => String(f)).filter((f: string) => /^[A-Z]{2}(-[A-Z]{3})?$/.test(f)).slice(0, 3),
     time: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(b.time ?? "")) ? String(b.time) : "",
     loc: str(b.loc, 80).trim(),
     addr: str(b.addr, 200).trim(),
