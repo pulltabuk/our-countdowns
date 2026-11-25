@@ -506,6 +506,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <p class="hint">Your dates. Tap one to change or delete it.</p>
     <div class="rows" id="manage-rows"></div>
     <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn" type="button" id="invite">Invite your partner</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
+    <p class="hint" id="ver"></p>
     <div class="pass" id="pass-box" hidden></div>
     <div class="acts"><button class="btn ghost" type="button" id="notif">Turn on notifications</button></div>
     <p class="hint" id="notif-note">Get a notification on this phone when your partner adds a shared event.</p>
@@ -1360,25 +1361,30 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795604886";
+const BUILD="1795605667";
+/* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
+const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
+function updNote(m){const e=$("ver");if(e)e.textContent="This version: "+buildLabel(BUILD)+". "+m}
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
+    if(!v||v===BUILD){updNote("Up to date, checked at "+hhmm(new Date())+".");return}
     /* never pull the page out from under someone who is filling something in; try again on the next check */
     const busy=!$("editor").hidden||!$("profile").hidden||!$("gate").hidden||!!((($("t-new")||{}).value||"")+(($("claim-name")||{}).value||"")).trim();
-    if(v&&v!==BUILD&&(force||!busy)){
-      /* Fetch the new page ourselves and put it in the phone's saved copy before reloading, so the reload cannot
-         land on the old page. Give up after three goes per version so a fault can never cause a reload loop. */
-      let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
-      if(!force&&n>=3)return;
-      const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
-      /* the new page must carry the new number; the text is split so the stamping script can never rewrite this line */
-      if(!r.ok||html.indexOf("const BU"+"ILD="+JSON.stringify(v)+";")<0)return;
-      if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
-      try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
-      location.reload();
-    }
-  }catch(e){}
+    if(!force&&busy){updNote("A newer version ("+buildLabel(v)+") will install when you finish what you are doing.");return}
+    /* Fetch the new page ourselves and put it in the phone's saved copy before reloading, so the reload cannot
+       land on the old page. Give up after three goes per version so a fault can never cause a reload loop. */
+    let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
+    if(!force&&n>=3){updNote("A newer version ("+buildLabel(v)+") is available but did not install by itself. Tap Check for updates.");return}
+    updNote("Installing a newer version ("+buildLabel(v)+")...");
+    const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
+    /* the new page must carry the new number; the text is split so the stamping script can never rewrite this line */
+    if(!r.ok||html.indexOf("const BU"+"ILD="+JSON.stringify(v)+";")<0){updNote("A newer version ("+buildLabel(v)+") was announced but is not ready yet. Trying again shortly.");return}
+    if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
+    try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
+    location.reload();
+  }catch(e){updNote("Could not check for updates at "+hhmm(new Date())+". No connection?")}
 }
 $("reload").addEventListener("click",()=>{$("reload").textContent="Checking";checkUpdate(true).then(()=>setTimeout(()=>location.reload(),600))});
 async function boot(){
