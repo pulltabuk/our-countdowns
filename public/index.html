@@ -159,7 +159,7 @@ form.autoedit [data-own]{display:none!important}
 .stk{display:inline-grid;place-items:center;flex:none;width:48px;height:48px;border-radius:50%;background:#FFF1D0;box-shadow:0 0 0 2px #20143A,0 3px 0 2px rgba(0,0,0,.2);font-style:normal;font-size:1.6rem;line-height:1}
 .stk.sm{width:36px;height:36px;font-size:1.2rem}
 .thead{display:flex;align-items:center;gap:14px}
-.lf{white-space:nowrap}
+.lf{white-space:nowrap;font-size:.92em;letter-spacing:.04em}
 .fchips{display:flex;flex-wrap:wrap;gap:8px}
 .fchip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;min-height:48px;font-weight:700;background:var(--fg);color:var(--bg)}
 .fchip span{font-size:1.4rem;line-height:1}.fchip i{font-style:normal;opacity:.7;margin-left:2px}
@@ -758,7 +758,7 @@ function cardHTML(ev,fmt){
   const body='<span class="unit">'+w.unit+'</span><span class="ttl">'+esc(ev.title)+'</span><span class="when">'+esc(whenText(ev,I.t))+(ev.mode==="month"&&I.state!=="today"?" · counts to the 1st":"")+"</span>";
   const extra=(I.state==="final"?pips(I.days):"")+(fmt==="hero"?'<span class="tick" data-tick="'+esc(ev.id)+'">'+tickText(I)+"</span>":"");
   const d4=!w.word&&w.num.length>=4?" d4":"";
-  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+(hasTime(ev)?", "+ev.time:""))+(flagsOf(ev).length?' <span class="lf">'+flagsOf(ev).map(flagOf).join(" ")+"</span>":"")+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
+  h+='<span class="body">'+(tag?'<span class="tag">'+esc(tag)+"</span>":"")+'<span class="ttl">'+esc(ev.title)+(flagsOf(ev).length?' <span class="lf">'+flagsOf(ev).map(flagOf).join(" ")+"</span>":"")+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(ev.mode==="month"?whenText(ev,I.t):I.t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+(hasTime(ev)?", "+ev.time:""))+"</span>"+(I.state==="final"?pips(I.days):"")+"</span>";
   const flaps=w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join("");
   h+='<span class="side"><span class="flap'+d4+'" aria-label="'+esc(w.num)+'">'+flaps+'</span><span class="unit">'+(I.state==="today"?"is here":I.days===1?"sleep to go":"days to go")+"</span></span>";
   return h+"</button>";
@@ -891,9 +891,9 @@ function renderDetail(ev){
   detailStale=false;
   const now=new Date(),I=info(ev,now,pv),w=words(ev,I),real=info(ev,now),el=$("detail"),keep=el.scrollTop;
   el.className="detail s-"+I.state;el.setAttribute("style",styleOf(ev,I));
-  const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean).concat(flagsOf(ev).map(c=>flagOf(c)+" "+countryName(c)));
+  const facts=[hasTime(ev)?"At "+ev.time:"",TR_ICON[ev.transport]?TR_ICON[ev.transport]+" Going by "+ev.transport:"",ev.repeat?"Every year":""].filter(Boolean);
   let h='<div class="dwrap"><div class="dbar"><button type="button" class="chip" data-dclose>‹ Back</button>'+(canWrite?'<button type="button" class="chip" data-dedit>Edit</button>':"")+"</div>";
-  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="thead"><span class="ttl">'+esc(ev.title)+"</span>"+(ev.icon?'<em class="stk">'+esc(ev.icon)+"</em>":"")+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+"</span>"+(facts.length?'<span class="facts">'+facts.map(f=>"<i>"+esc(f)+"</i>").join("")+"</span>":"")+"</div>";
+  h+='<div class="dhead">'+(I.state==="milestone"?stamp(I.days,"d"):"")+'<span class="thead"><span class="ttl">'+esc(ev.title)+(flagsOf(ev).length?' <span class="lf">'+flagsOf(ev).map(flagOf).join(" ")+"</span>":"")+"</span>"+(ev.icon?'<em class="stk">'+esc(ev.icon)+"</em>":"")+'</span><span class="when">'+(ev.auto?AUTO+" ":ev.priv?PRIV+" ":"")+esc(whenText(ev,real.t))+"</span>"+(facts.length?'<span class="facts">'+facts.map(f=>"<i>"+esc(f)+"</i>").join("")+"</span>":"")+"</div>";
   h+='<div class="dtop">'+posterHTML(ev,true)+'<div class="cnt"><span class="flap'+(w.word?"":" n"+w.num.length)+'" aria-label="'+esc(w.num)+'">'+(w.word?'<b class="w">'+esc(ev.mode==="month"?I.t.toLocaleDateString(undefined,{month:"short"}):"Today")+"</b>":w.num.split("").map(c=>"<b>"+c+"</b>").join(""))+'</span><span class="unit">'+(I.state==="today"?(ev.mode==="month"?"has arrived":"is the day"):(I.days===1?"sleep to go":"days to go"))+"</span></div></div>";
   if(I.state==="today")h+='<div class="shout">'+(ev.mode==="month"?"The month you were waiting for is here.":"No more counting. This is it.")+'</div><button type="button" class="bigbtn" data-party>Celebrate '+esc(ev.icon)+"</button>"+(pv==null&&hasTime(ev)&&targetTs(ev,real.t)>Date.now()?liveSec(ev,real.t,""):"");
   else if(SPECIAL[I.days])h+='<div class="shout">'+SPECIAL[I.days]+"</div>";
@@ -1358,7 +1358,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795566370";
+const BUILD="1795603940";
 async function checkUpdate(force){
   try{
     const v=(await (await fetch("/version.json",{cache:"no-store"})).json()).v;
@@ -1370,7 +1370,7 @@ async function checkUpdate(force){
       let n=0;try{n=+(sessionStorage.getItem("oc.try."+v)||0)}catch(e){}
       if(!force&&n>=3)return;
       const r=await fetch("/index.html?fresh="+v,{cache:"no-store"}),html=await r.text();
-      if(!r.ok||html.indexOf('const BUILD="1795566370"')<0)return;
+      if(!r.ok||html.indexOf('const BUILD="1795603940"')<0)return;
       if(window.caches){const c=await caches.open("oc-shell-v1");await c.put("/",new Response(html,{headers:{"content-type":"text/html; charset=utf-8"}}))}
       try{sessionStorage.setItem("oc.try."+v,String(n+1));sessionStorage.setItem("oc.reopen",openId||"");sessionStorage.setItem("oc.scroll",String(openId?homeY:window.scrollY))}catch(e){}
       location.reload();
