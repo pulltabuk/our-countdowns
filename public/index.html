@@ -528,7 +528,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
   <form class="panel" id="pf-form" novalidate>
     <div class="phead"><h2>Your profile</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
     <p class="hint">Your name and photo appear beside the dates and list items you add, so you can both see who added what.</p>
-    <div class="fld" id="pf-pick" hidden><span class="lab">Already set up on another phone? Tap yourself.</span><div class="rows" id="pf-list"></div></div>
+    <div class="fld" id="pf-pick" hidden><span class="lab">Is one of these you? Tap your name. Once chosen, a name belongs to that phone and cannot be picked on another.</span><div class="rows" id="pf-list"></div></div>
     <div class="pfrow"><span id="pf-av"></span><label class="btn ghost" for="pf-file">Choose a photo</label><input id="pf-file" type="file" accept="image/*" hidden></div>
     <div class="fld"><label for="pf-name">Your name</label><input class="inp" id="pf-name" maxlength="24" autocomplete="given-name"></div>
     <div class="err" id="pf-err" hidden></div>
@@ -1178,7 +1178,7 @@ function openEditor(ev,from){
   back=from||null;history.pushState({oc:1},"");
   editing=ev?ev.id:null;const now=new Date(),pad=n=>String(n).padStart(2,"0");
   $("f-me-wrap").hidden=!!me||!!ev;$("f-myname").value="";
-  const known=Object.keys(profiles);
+  const known=Object.keys(profiles).filter(id=>!profiles[id].taken);
   $("f-who").innerHTML=(known.length?'<option value="">Choose your name</option>':"")+known.map(id=>'<option value="'+esc(id)+'">'+esc(profiles[id].name)+"</option>").join("")+'<option value="new">Someone new</option>';
   $("f-who").value=known.length?"":"new";$("f-who").hidden=!known.length;$("f-myname").hidden=!!known.length;
   $("f-by-wrap").hidden=!ev||!!ev.auto;$("f-added-wrap").hidden=!ev||!!ev.auto||!ev.createdAt;
@@ -1290,12 +1290,12 @@ $("form").addEventListener("submit",async e=>{
   if(!old&&!me){
     const who=$("f-who").value;
     if(!who)return fail("Choose your name so the event shows who added it.");
-    if(profiles[who])setMe(who);
+    if(profiles[who]){setMe(who);send("POST","profiles/"+who+"/claim").catch(()=>{})}
     else{
     const nm=$("f-myname").value.trim();if(!nm)return fail("Add your name so the event shows who added it.");
     const pid="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-    profiles[pid]={name:nm,photo:""};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}
-    setMe(pid);send("PUT","profiles/"+pid,{name:nm,photo:""}).catch(()=>{});
+    profiles[pid]={name:nm,photo:"",taken:true,mine:true};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}
+    setMe(pid);send("PUT","profiles/"+pid,{name:nm,photo:"",mine:true}).catch(()=>{});
     }
   }
   const body={title,mode:draft.mode,y,m,d,icon:draft.icon,color:draft.color,repeat:$("f-repeat").checked,important:$("f-important").checked,transport:draft.transport||"",flags:(draft.flags||[]).slice(0,3),priv:!!draft.priv,time:draft.mode==="day"&&OKT.test($("f-time").value)?$("f-time").value:"",scene:$("f-scene").value==="auto"?"":$("f-scene").value,note:$("f-note").value.trim(),createdAt:old&&old.createdAt||Date.now(),by:old?$("f-by").value:me,todo:old&&old.todo||[]};if(old&&old.example)body.example=true;
@@ -1337,7 +1337,12 @@ async function api(method,path,body){
 function setEvents(list,pf,ao){
   if(ao&&typeof ao==="object"){autoOv=ao;try{localStorage.setItem("oc.auto",JSON.stringify(ao))}catch(e){}}
   loaded=true;
-  if(pf){const m={};pf.forEach(p=>{if(p&&p.id)m[p.id]={name:String(p.name||"").slice(0,24),photo:okPhoto(p.photo)}});profiles=m;try{localStorage.setItem("oc.pf",JSON.stringify(m))}catch(e){}}
+  if(pf){const m={};pf.forEach(p=>{if(p&&p.id)m[p.id]={name:String(p.name||"").slice(0,24),photo:okPhoto(p.photo),taken:!!p.taken,mine:!!p.mine}});profiles=m;try{localStorage.setItem("oc.pf",JSON.stringify(m))}catch(e){}
+    /* each name belongs to one phone: forget a name another phone holds, and recognise our own */
+    const was=me;
+    if(me&&m[me]&&m[me].taken&&!m[me].mine)me="";
+    if(!me){const own=Object.keys(m).find(id=>m[id].mine);if(own)me=own}
+    if(me!==was){try{if(me)localStorage.setItem("oc.me",me);else localStorage.removeItem("oc.me")}catch(e){}lastJSON=""}}
   const j=JSON.stringify([list,profiles,autoOv]);
   if(j===lastJSON){if($("wall").querySelector(".empty"))render();return}
   lastJSON=j;events=list;writeCache();render();
@@ -1393,7 +1398,7 @@ function drawPf(){$("pf-av").innerHTML=pfPhoto?'<img class="av xl" src="'+pfPhot
 function openProfile(){
   history.pushState({oc:1},"");
   const p=profiles[me];$("pf-name").value=p?p.name:"";pfPhoto=p?p.photo:"";drawPf();
-  const others=Object.keys(profiles).filter(id=>id!==me);
+  const others=Object.keys(profiles).filter(id=>id!==me&&!profiles[id].taken);
   $("pf-pick").hidden=!!me||!others.length;
   $("pf-list").innerHTML=others.map(id=>'<button type="button" class="row" data-pick="'+esc(id)+'">'+avatar(id,"md")+'<span class="rt"><b>'+esc(profiles[id].name)+'</b><span>This is me</span></span></button>').join("");
   $("pf-err").hidden=true;$("pf-save").disabled=false;pfBack=!$("manage").hidden;$("manage").hidden=true;$("profile").hidden=false;lock();
@@ -1467,7 +1472,11 @@ $("mv-form").addEventListener("submit",async e=>{
 });
 $("show-pass").addEventListener("click",()=>{const b=$("pass-box");b.hidden=!b.hidden;b.textContent=pass||"Not saved on this phone";$("show-pass").textContent=b.hidden?"Show the passcode":"Hide the passcode"});
 $("pf-name").addEventListener("input",()=>{if(!pfPhoto)drawPf()});
-$("pf-list").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(b){setMe(b.dataset.pick);history.back()}});
+$("pf-list").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-pick]");if(!b)return;const id=b.dataset.pick,err=m=>{$("pf-err").textContent=m;$("pf-err").hidden=false};
+  try{await api("POST","profiles/"+id+"/claim");if(profiles[id]){profiles[id].taken=true;profiles[id].mine=true}setMe(id);history.back()}
+  catch(x){err(x.code==="claimed"?"That name is already in use on another phone.":"That did not work. Check your connection and try again.")}
+});
 $("pf-file").addEventListener("change",e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
   const img=new Image(),url=URL.createObjectURL(f);
@@ -1486,8 +1495,8 @@ $("pf-form").addEventListener("submit",async e=>{
   if(!name)return err("Add your name.");
   const id=me||("p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
   $("pf-save").disabled=true;
-  try{await api("PUT","profiles/"+id,{name,photo:pfPhoto});profiles[id]={name,photo:okPhoto(pfPhoto)};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}setMe(id);history.back()}
-  catch(x){err("That did not save. Check your connection and try again.");$("pf-save").disabled=false}
+  try{await api("PUT","profiles/"+id,{name,photo:pfPhoto,mine:true});profiles[id]={name,photo:okPhoto(pfPhoto),taken:true,mine:true};try{localStorage.setItem("oc.pf",JSON.stringify(profiles))}catch(x){}setMe(id);history.back()}
+  catch(x){err(x.code==="claimed"?"That name belongs to another phone.":"That did not save. Check your connection and try again.");$("pf-save").disabled=false}
 });
 
 function showGate(claimed,msg){
@@ -1516,7 +1525,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795728820";
+const BUILD="1795729344";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}

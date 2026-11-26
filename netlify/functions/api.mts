@@ -133,27 +133,58 @@ export default async (req: Request, context: Context) => {
   // "rev" changes on every write, so phones can poll it cheaply and only reload when it moves.
   const bump = () => s.set("meta/rev", String(Date.now()));
   // Activity: a short running list of who added or changed what, shown on the Activity screen.
-  const meId = req.headers.get("x-me") || "";
-  const who = /^[A-Za-z0-9_-]{1,40}$/.test(meId) ? meId : "";
+  // Each name belongs to one phone: a profile stores the hash of that phone's key ("k"), and a phone is only
+  // believed about who it is when the name it gives is its own (or not yet claimed by any phone).
+  type Pf = { name: string; photo: string; k?: string };
+  const meRaw = req.headers.get("x-me") || "";
+  const meId = /^[A-Za-z0-9_-]{1,40}$/.test(meRaw) ? meRaw : "";
+  let whoKnown: string | undefined;
+  const whoIs = async () => {
+    if (whoKnown !== undefined) return whoKnown;
+    whoKnown = "";
+    if (meId) {
+      const p = (await s.get("pf/" + meId, { type: "json" })) as Pf | null;
+      if (p && (!p.k || p.k === keyHash)) whoKnown = meId;
+    }
+    return whoKnown;
+  };
   const log = async (ev: string, title: string, what: string[], owner?: string) => {
     if (!what.length) return;
     try {
       const list = ((await s.get("act", { type: "json" })) as Entry[] | null) || [];
-      await s.setJSON("act", addEntry(list, { t: Date.now(), who, k: keyHash, ev, title, what, ...(owner ? { owner } : {}) }));
+      await s.setJSON("act", addEntry(list, { t: Date.now(), who: await whoIs(), k: keyHash, ev, title, what, ...(owner ? { owner } : {}) }));
     } catch (e) {
       console.error("activity", e);
     }
   };
   if (head === "rev" && req.method === "GET") return json({ rev: (await s.get("meta/rev")) || "0" });
 
+  if (head === "profiles" && req.method === "POST" && parts[2] === "claim") {
+    // "This is me": succeeds only if no other phone already holds the name.
+    if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
+    if (!keyHash) return json({ error: "key" }, 400);
+    const cur = (await s.get("pf/" + id, { type: "json" })) as Pf | null;
+    if (!cur) return json({ error: "not found" }, 404);
+    if (cur.k && cur.k !== keyHash) return json({ error: "taken" }, 409);
+    if (!cur.k) {
+      await s.setJSON("pf/" + id, { ...cur, k: keyHash });
+      await bump();
+    }
+    return json({ ok: true });
+  }
+
   if (head === "profiles" && req.method === "PUT") {
     if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
+    const cur = (await s.get("pf/" + id, { type: "json" })) as Pf | null;
+    if (cur?.k && cur.k !== keyHash) return json({ error: "taken" }, 409);
     const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const name = str(b.name, 24).trim();
     const photo = String(b.photo ?? "");
     if (!name) return json({ error: "invalid" }, 400);
     if (photo && (!photo.startsWith("data:image/jpeg;base64,") || photo.length > 80000)) return json({ error: "photo" }, 400);
-    await s.setJSON("pf/" + id, { name, photo });
+    // "mine" is sent when a phone saves its own profile; a name jotted down for someone else stays unclaimed.
+    const k = cur?.k || (b.mine && keyHash ? keyHash : "");
+    await s.setJSON("pf/" + id, { name, photo, ...(k ? { k } : {}) });
     await bump();
     return json({ ok: true });
   }
@@ -258,6 +289,7 @@ export default async (req: Request, context: Context) => {
   const sentence = (w: string[]) => (w.length > 1 ? w.slice(0, -1).join(", ") + " and " + w[w.length - 1] : w[0] || "changed it");
   const notifyOthers = async (heading: string, what: string[], evId: string) => {
     const keys = await vapid();
+    const who = await whoIs();
     const name = who ? ((await s.get("pf/" + who, { type: "json" })) as { name?: string } | null)?.name : "";
     const payload = JSON.stringify({ title: heading, body: (name || "Someone") + " " + sentence(what), id: evId });
     const { blobs } = await s.list({ prefix: "push/" });
@@ -316,8 +348,16 @@ export default async (req: Request, context: Context) => {
     const profiles = (
       await Promise.all(
         pf.blobs.map(async (b) => {
-          const data = (await s.get(b.key, { type: "json" })) as Record<string, unknown> | null;
-          return data ? { ...data, id: b.key.slice(3) } : null;
+          const data = (await s.get(b.key, { type: "json" })) as Pf | null;
+          if (!data) return null;
+          let k = data.k || "";
+          // a phone already using a name from before names were tied to phones keeps it
+          if (!k && keyHash && meId && b.key === "pf/" + meId) {
+            k = keyHash;
+            await s.setJSON(b.key, { ...data, k });
+            await bump();
+          }
+          return { name: data.name, photo: data.photo, id: b.key.slice(3), taken: !!k, mine: !!k && k === keyHash };
         }),
       )
     ).filter(Boolean);
