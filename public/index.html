@@ -559,6 +559,17 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <button class="btn" type="submit" id="chg-save">Save new passcode</button>
     </form>
     <p class="hint" id="invite-note" hidden></p>
+    <p class="lab2">Moving this app</p>
+    <p class="hint">Getting a new phone, or adding the app to your home screen again? Get a move code here first. Entering it in the new copy brings across your private events, your name and (if this is the administrator's phone) the administrator role.</p>
+    <div class="acts"><button class="btn ghost" type="button" id="mv-get">Get a move code</button></div>
+    <div class="pass" id="mv-box" hidden></div>
+    <p class="hint" id="mv-note" hidden></p>
+    <form id="mv-form" class="fld" novalidate>
+      <label for="mv-code">Have a move code from your old copy? Enter it here</label>
+      <input class="inp" id="mv-code" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="6 digits">
+      <div class="err" id="mv-err" hidden></div>
+      <button class="btn" type="submit" id="mv-use">Use this code</button>
+    </form>
   </div>
 </div>
 
@@ -1434,6 +1445,22 @@ $("chg-form").addEventListener("submit",async e=>{
   }catch(x){err("That did not save. Check your connection and try again.")}
   $("chg-save").disabled=false;
 });
+$("mv-get").addEventListener("click",async()=>{
+  const n=$("mv-note");n.hidden=false;
+  try{const d=await api("POST","move",{me});$("mv-box").hidden=false;$("mv-box").textContent=d.code.slice(0,3)+" "+d.code.slice(3);
+    n.textContent="This code works once, for the next 30 minutes. In the new copy: enter the passcode, open the menu, and type this code at the bottom. Keep this copy until the new one is working."}
+  catch(e){n.textContent="That did not work. Check your connection and try again."}
+});
+$("mv-form").addEventListener("submit",async e=>{
+  e.preventDefault();const code=$("mv-code").value.replace(/\D/g,""),err=m=>{$("mv-err").textContent=m;$("mv-err").hidden=false};
+  if(code.length!==6)return err("The code is 6 digits.");
+  $("mv-use").disabled=true;
+  try{const d=await api("GET","move/"+code);
+    if(!d.key||d.key.length<32)throw{code:"http"};
+    localStorage.setItem("oc.key",d.key);if(d.admin)localStorage.setItem("oc.admin",d.admin);if(d.me)localStorage.setItem("oc.me",d.me);
+    location.reload();}
+  catch(x){$("mv-use").disabled=false;err(x.code==="offline"?"No connection. Try again when you are online.":"That code is not right, or it has run out. Get a new one from your old copy.")}
+});
 $("show-pass").addEventListener("click",()=>{const b=$("pass-box");b.hidden=!b.hidden;b.textContent=pass||"Not saved on this phone";$("show-pass").textContent=b.hidden?"Show the passcode":"Hide the passcode"});
 $("pf-name").addEventListener("input",()=>{if(!pfPhoto)drawPf()});
 $("pf-list").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(b){setMe(b.dataset.pick);history.back()}});
@@ -1485,7 +1512,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795723626";
+const BUILD="1795724553";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}

@@ -101,6 +101,25 @@ export default async (req: Request, context: Context) => {
     return json({ ok: true });
   }
 
+  // Moving to a new phone or a fresh copy of the app: the old copy parks its keys under a short code
+  // for half an hour, and the new copy (which must also know the passcode) collects them once.
+  if (head === "move") {
+    if (req.method === "POST") {
+      if (!keyHash) return json({ error: "key" }, 400);
+      const b = (await req.json().catch(() => ({}))) as { me?: unknown };
+      const code = String(100000 + (randomBytes(4).readUInt32BE(0) % 900000));
+      await s.setJSON("mv/" + code, { key: deviceKey, admin: isAdmin ? adminKey : "", me: str(b.me, 40), exp: Date.now() + 30 * 60 * 1000 });
+      return json({ code });
+    }
+    if (req.method === "GET" && /^\d{6}$/.test(id || "")) {
+      const m = (await s.get("mv/" + id, { type: "json" })) as { key: string; admin: string; me: string; exp: number } | null;
+      if (m) await s.delete("mv/" + id);
+      if (!m || m.exp < Date.now()) return json({ error: "code" }, 404);
+      return json({ key: m.key, admin: m.admin, me: m.me });
+    }
+    return json({ error: "method" }, 405);
+  }
+
   if (head === "passcode" && req.method === "POST") {
     if (!isAdmin) return json({ error: "admin" }, 403);
     const b = (await req.json().catch(() => ({}))) as { pass?: unknown };
