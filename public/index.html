@@ -269,6 +269,8 @@ form.autoedit [data-own]{display:none!important}
 .byline b{display:block;font-family:var(--display);font-size:1.2rem}.byline span{font-size:.875rem;opacity:.85}
 .pfrow{display:flex;align-items:center;gap:16px}
 .merow{display:flex;align-items:center;gap:14px;background:var(--field);border-radius:20px;padding:14px 16px;width:100%}
+#who-row{background:var(--surface);border:1px solid var(--line);text-align:left}
+#who-row .go{font-size:.9375rem;font-weight:700;background:var(--field);border-radius:999px;padding:11px 16px;flex:none}
 .merow .rt{flex:1;min-width:0}.merow b{display:block;font-size:1.0625rem}.merow .rt span{font-size:.9rem;color:var(--muted)}
 .sugg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--field);border-radius:16px;padding:12px 14px;font-weight:600}
 .sugg i{width:26px;height:26px;border-radius:50%;background:var(--c);flex:none;display:block}
@@ -501,6 +503,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="hbtns"><button class="sq dark" id="quick-add" type="button" aria-label="Add a date">+</button><button class="sq bellb" id="open-activity" type="button" aria-label="Activity"><svg viewBox="0 0 20 20" width="26" height="26" aria-hidden="true"><path d="M10 2.2a5 5 0 00-5 5v3.3L3.3 13.8a.8.8 0 00.7 1.200h12a.8.8 0 00.7-1.200L15 10.5V7.2a5 5 0 00-5-5zM8 16.2a2 2 0 004 0z" fill="currentColor"/></svg><b id="act-n" hidden></b></button><button class="sq" id="open-manage" type="button" aria-label="Menu"><i></i><i></i><i></i></button></div>
   </header>
   <div class="status" id="status" hidden></div>
+  <button type="button" class="merow" id="who-row" hidden><span class="av md">?</span><span class="rt"><b>Who is using this phone?</b><span>Choose your name so you both see who added what</span></span><span class="go">Choose</span></button>
   <div class="tools" id="tools" hidden>
     <label class="pick" for="sort"><span>Order</span><select id="sort"><option value="soon">Soonest</option><option value="far">Longest</option><option value="az">A to Z</option><option value="za">Z to A</option><option value="new">Recently Created</option><option value="upd">Recently Updated</option></select></label>
     <label class="pick" for="show"><span>Show</span><select id="show"><option value="all">Everything</option><option value="shared">Shared with us both</option><option value="mine">Just mine</option><option value="auto">UK bank holidays and interesting dates</option></select></label>
@@ -550,7 +553,6 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="rows" id="manage-rows"></div>
     <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn" type="button" id="invite">Invite your partner</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
     <p class="hint" id="ver"></p>
-    <p class="hint" id="diag"></p>
     <div class="pass" id="pass-box" hidden></div>
     <div class="acts"><button class="btn ghost" type="button" id="notif">Turn on notifications</button></div>
     <p class="hint" id="notif-note">Get a notification on this phone when your partner adds or changes a shared event.</p>
@@ -925,7 +927,7 @@ function render(){
   }
   $("mem").hidden=!past.length;
   $("mem-rows").innerHTML=past.map(a=>rowHTML(a.ev,(-a.I.days)+(a.I.days===-1?" day ago":" days ago"),"View")).join("");
-  $("quick-add").hidden=!canWrite;
+  $("quick-add").hidden=!canWrite;$("who-row").hidden=!!me||!pass||!loaded;
   renderManage();
   if(openId){const ev=findEv(openId);if(ev)renderDetail(ev);else closeDetail()}
   const first=act.find(a=>a.I.state==="today");
@@ -936,7 +938,6 @@ function rowHTML(ev,sub,action){
   return'<button type="button" class="row" data-edit="'+esc(ev.id)+'"><span class="sw" style="--c:'+c.bg+'">'+esc(ev.icon)+'</span><span class="rt"><b>'+esc(ev.title)+"</b><span>"+esc(sub)+"</span></span>"+(action?'<span class="go">'+action+"</span>":"")+"</button>";
 }
 function renderManage(){
-  try{const v=(navigator.userAgent.match(/OS (\d+[_\d]*)/)||[])[1]||"?";$("diag").textContent="Screen check: top "+$("sbar").offsetHeight+", app "+(navigator.standalone===true||matchMedia("(display-mode: standalone)").matches?"yes":"no")+", iOS "+v.replace(/_/g,".")}catch(e){}
   $("admin-claim").hidden=hasAdmin;$("chg-open").hidden=!isAdmin;if(!isAdmin)$("chg-form").hidden=true;
   $("admin-note").textContent=isAdmin?"You are the administrator. Only this phone can change the passcode.":hasAdmin?"Only the administrator can change the passcode.":"No administrator yet. The administrator is the one phone allowed to change the passcode.";
   const mp=profiles[me];
@@ -1370,7 +1371,7 @@ async function sync(full){
   if(outbox.length&&!(await flush())){pendingNote();loaded=true;syncing=false;return}
   try{
     if(!full&&rev){const r=await api("GET","rev");if(r.rev===rev){status("");syncing=false;return}}
-    const d=await api("GET","events");rev=d.rev||"";status("");setRole(d);setEvents(d.events||[],d.profiles||[],d.auto);setActivity(d.activity);loadHol();maybeAskMe();
+    const d=await api("GET","events");rev=d.rev||"";status("");setRole(d);setEvents(d.events||[],d.profiles||[],d.auto);setActivity(d.activity);loadHol();
   }
   catch(e){
     if(e.code==="auth"){pass="";showGate(true,"That passcode no longer works. Enter it again.")}
@@ -1399,7 +1400,7 @@ function openProfile(){
 }
 function closeProfile(){$("profile").hidden=true;if(pfBack)$("manage").hidden=false;pfBack=false;lock()}
 function setMe(id){me=id;try{localStorage.setItem("oc.me",id)}catch(e){}lastJSON="";render()}
-$("me-row").addEventListener("click",openProfile);
+$("me-row").addEventListener("click",openProfile);$("who-row").addEventListener("click",openProfile);
 $("invite").addEventListener("click",async()=>{
   const url=location.origin+"/",text="Our Countdowns: open this in Safari, then enter our passcode (I'll send it separately).",note=m=>{$("invite-note").textContent=m;$("invite-note").hidden=false};
   try{
@@ -1515,7 +1516,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795728584";
+const BUILD="1795728820";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
