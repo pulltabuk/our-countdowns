@@ -9,8 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Countdowns">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#ECEAF3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E0C18" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#211D38">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="icon" href="/icon-180.png">
@@ -36,11 +35,13 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0}
 /* a solid strip behind the phone's clock and battery, always in the colour of the screen being shown */
 #sbar{position:fixed;top:0;left:0;right:0;height:max(env(safe-area-inset-top,0px),4px);background:var(--bg);z-index:50}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+/* The page behind everything is dark: the iPhone copies it into the strip behind the clock, where the clock is white. Each screen paints its own colour on top. */
+html,body{background:#211D38}
+body{color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;text-align:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
-.app{max-width:560px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:24px}
+.app{background:var(--bg);min-height:100vh;box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax);max-width:560px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:24px}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .head>div:first-child{flex:1 1 auto}
 h1{white-space:nowrap}
@@ -1012,14 +1013,15 @@ function closeDetail(){claimNew=false;remOpen=null;openId=null;pv=null;$("detail
 let homeY=0,wasOpen=false,tintNow=null;
 /* The strip behind the phone's clock. iPhones only pick up a new colour from a freshly added tag, so the old one is replaced, not edited. */
 function setTint(c,strip){
-  document.body.style.background=c;document.documentElement.style.background=c;
+  const page=c?"color-mix(in srgb,"+c+" 72%,#000)":"";
+  document.body.style.background=page;document.documentElement.style.background=page;
   /* under the clock (when the app reaches that far) a darker shade, as the clock is white; otherwise a thin line in the exact colour, for the phone to copy */
   let sb=$("sbar");const under=sb.offsetHeight>5,col=under?(c?"color-mix(in srgb,"+c+" 62%,#000)":"#211D38"):(c||strip||"");
   if(c===tintNow&&col===sb.style.background)return;tintNow=c;
   const fresh=sb.cloneNode(false);fresh.style.background=col;sb.replaceWith(fresh);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());
   const add=(col,media)=>{const m=document.createElement("meta");m.name="theme-color";m.content=col;if(media)m.media=media;document.head.appendChild(m)};
-  if(c)add(c);else{add("#ECEAF3","(prefers-color-scheme: light)");add("#0E0C18","(prefers-color-scheme: dark)")}
+  add(c?page:"#211D38");
 }
 function lock(){
   const sheetOpen=!$("activity").hidden||!$("manage").hidden||!$("editor").hidden||!$("gate").hidden||!$("profile").hidden,open=!!openId||sheetOpen;
@@ -1512,7 +1514,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795727084";
+const BUILD="1795727269";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
