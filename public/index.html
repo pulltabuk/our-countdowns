@@ -992,11 +992,19 @@ function renderDetail(ev){
   el.innerHTML=h;el.scrollTop=keep;
   const tn1=$("t-new");if(tn1){if(typed)tn1.value=typed;if(foc){tn1.focus({preventScroll:true});try{tn1.setSelectionRange(caret,caret)}catch(e){}}}
 }
-function openDetail(id){const ev=findEv(id);if(!ev)return;history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
+function openDetail(id){const ev=findEv(id);if(!ev)return;setTint(colorOf(ev).bg);history.pushState({oc:1},"");openId=id;pv=null;$("detail").hidden=false;$("detail").scrollTop=0;lock();renderDetail(ev);
   if(info(ev,new Date()).state==="today"){partied.add(id+lastDay);celebrate(ev);fanfare()}}
 function closeDetail(){claimNew=false;remOpen=null;openId=null;pv=null;$("detail").hidden=true;$("detail").innerHTML="";lock()}
 /* Screens sit in the normal page flow (no fixed overlays), so every button can be scrolled to. */
-let homeY=0,wasOpen=false;
+let homeY=0,wasOpen=false,tintNow=null;
+/* The strip behind the phone's clock. iPhones only pick up a new colour from a freshly added tag, so the old one is replaced, not edited. */
+function setTint(c,strip){
+  document.body.style.background=c;document.documentElement.style.background=c;$("sbar").style.background=strip||c;
+  if(c===tintNow)return;tintNow=c;
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());
+  const add=(col,media)=>{const m=document.createElement("meta");m.name="theme-color";m.content=col;if(media)m.media=media;document.head.appendChild(m)};
+  if(c)add(c);else{add("#ECEAF3","(prefers-color-scheme: light)");add("#0E0C18","(prefers-color-scheme: dark)")}
+}
 function lock(){
   const sheetOpen=!$("activity").hidden||!$("manage").hidden||!$("editor").hidden||!$("gate").hidden||!$("profile").hidden,open=!!openId||sheetOpen;
   if(open&&!wasOpen)homeY=window.scrollY;
@@ -1004,8 +1012,7 @@ function lock(){
   // the event page is one solid colour edge to edge, including behind the phone's status bar
   const dev=openId&&!sheetOpen?findEv(openId):null;
   const tint=dev?colorOf(dev).bg:sheetOpen?"var(--surface)":"";
-  document.body.style.background=dev?tint:"";document.documentElement.style.background=dev?tint:"";$("sbar").style.background=tint;
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{if(!m.dataset.d)m.dataset.d=m.content;m.content=dev?tint:m.dataset.d});
+  setTint(dev?tint:"",tint);
   window.scrollTo(0,open?0:homeY);wasOpen=open;
 }
 
@@ -1474,7 +1481,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795710691";
+const BUILD="1795718944";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
