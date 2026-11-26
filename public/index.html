@@ -1512,7 +1512,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795724553";
+const BUILD="1795726538";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
@@ -1548,7 +1548,7 @@ async function boot(){
     if(sy)window.scrollTo(0,sy);
     if(ro&&findEv(ro)){openDetail(ro);homeY=sy}
   }catch(e){}
-  actBadge();
+  actBadge();setTint("");
   try{const u=new URL(location.href),o=u.searchParams.get("open");if(o){wantOpen=o;history.replaceState(null,"","/")}}catch(e){}
   if(pass)sync(true).then(()=>{if(wantOpen)goTapped(wantOpen,true);else checkTapped()});
   else{
