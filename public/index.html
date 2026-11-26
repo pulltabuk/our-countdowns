@@ -30,11 +30,13 @@
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* iPhones blur and tint whatever sits in the top band of the screen (the clock area and a little below it).
+   So that band is one solid bar in a single colour, and every screen starts just beneath it. */
+:root{padding-top:calc(env(safe-area-inset-top,0px) + min(32px,env(safe-area-inset-top,0px)));padding-bottom:env(safe-area-inset-bottom,0px)}
 [hidden]{display:none!important}
 body{margin:0}
 /* a solid strip behind the phone's clock and battery, always in the colour of the screen being shown */
-#sbar{position:fixed;top:0;left:0;right:0;height:max(env(safe-area-inset-top,0px),4px);background:var(--bg);z-index:50}
+#sbar{position:fixed;top:0;left:0;right:0;height:calc(env(safe-area-inset-top,0px) + min(32px,env(safe-area-inset-top,0px)));background:#211D38;z-index:50}
 /* The page behind everything is dark: the iPhone copies it into the strip behind the clock, where the clock is white. Each screen paints its own colour on top. */
 html,body{background:#211D38}
 body{color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
@@ -318,7 +320,7 @@ form.autoedit [data-own]{display:none!important}
 .detail{min-height:100vh;background:var(--c);color:var(--ink)}
 .dwrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:20px;animation:rise .35s ease-out;
   padding-top:14px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
-.dbar{display:flex;justify-content:space-between;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--c);margin:-14px -20px 0;padding:10px 20px;box-shadow:0 1.5px 0 color-mix(in srgb,var(--ink) 16%,transparent)}
+.dbar{display:flex;justify-content:space-between;gap:10px;position:sticky;top:calc(env(safe-area-inset-top,0px) + min(32px,env(safe-area-inset-top,0px)));z-index:6;background:color-mix(in srgb,var(--c) 72%,#000);margin:-14px -20px 0;padding:10px 20px;box-shadow:0 1.5px 0 color-mix(in srgb,var(--ink) 16%,transparent)}
 .dbar .chip{padding:8px 18px;min-height:40px;font-size:.95rem}
 .chip{border-radius:999px;padding:13px 24px;font-weight:700;font-size:1.0625rem;min-height:50px;box-shadow:0 0 0 1.5px var(--ink) inset;white-space:nowrap}
 .chip.on{background:var(--ink);color:var(--c)}
@@ -1012,16 +1014,13 @@ function closeDetail(){claimNew=false;remOpen=null;openId=null;pv=null;$("detail
 /* Screens sit in the normal page flow (no fixed overlays), so every button can be scrolled to. */
 let homeY=0,wasOpen=false,tintNow=null;
 /* The strip behind the phone's clock. iPhones only pick up a new colour from a freshly added tag, so the old one is replaced, not edited. */
-function setTint(c,strip){
+function setTint(c){
+  /* a darker shade of the event's colour (the clock is always white), or the app's navy on every other screen */
   const page=c?"color-mix(in srgb,"+c+" 72%,#000)":"";
-  document.body.style.background=page;document.documentElement.style.background=page;
-  /* under the clock (when the app reaches that far) a darker shade, as the clock is white; otherwise a thin line in the exact colour, for the phone to copy */
-  let sb=$("sbar");const under=sb.offsetHeight>5,col=under?(c?"color-mix(in srgb,"+c+" 62%,#000)":"#211D38"):(c||strip||"");
-  if(c===tintNow&&col===sb.style.background)return;tintNow=c;
-  const fresh=sb.cloneNode(false);fresh.style.background=col;sb.replaceWith(fresh);
+  document.body.style.background=page;document.documentElement.style.background=page;$("sbar").style.background=page;
+  if(c===tintNow)return;tintNow=c;
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());
-  const add=(col,media)=>{const m=document.createElement("meta");m.name="theme-color";m.content=col;if(media)m.media=media;document.head.appendChild(m)};
-  add(c?page:"#211D38");
+  const m=document.createElement("meta");m.name="theme-color";m.content=c?page:"#211D38";document.head.appendChild(m);
 }
 function lock(){
   const sheetOpen=!$("activity").hidden||!$("manage").hidden||!$("editor").hidden||!$("gate").hidden||!$("profile").hidden,open=!!openId||sheetOpen;
@@ -1029,7 +1028,7 @@ function lock(){
   $("app").hidden=open;$("detail").hidden=!openId||sheetOpen;
   // the event page is one solid colour edge to edge, including behind the phone's status bar
   const dev=openId&&!sheetOpen?findEv(openId):null;
-  setTint(dev?colorOf(dev).bg:"",sheetOpen?"var(--surface)":"");
+  setTint(dev?colorOf(dev).bg:"");
   window.scrollTo(0,open?0:homeY);wasOpen=open;
 }
 
@@ -1514,7 +1513,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795727269";
+const BUILD="1795728186";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
