@@ -1,7 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import type { Config, Context } from "@netlify/functions";
 import webpush from "web-push";
-import { addEntry, describe, listChanges, type Entry } from "../lib/activity.mts";
+import { KEEP, addEntry, describe, listChanges, type Entry } from "../lib/activity.mts";
 import { titleFromSlug } from "../lib/due.mts";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
@@ -308,7 +308,7 @@ export default async (req: Request, context: Context) => {
       }),
     );
     const activity = (((await s.get("act", { type: "json" })) as Entry[] | null) || [])
-      .filter((a) => !a.owner || a.owner === keyHash)
+      .filter((a) => (!a.owner || a.owner === keyHash) && Date.now() - a.t < KEEP)
       .map(({ k, owner, ...rest }) => ({ ...rest, mine: !!keyHash && k === keyHash }));
     return json({ rev: (await s.get("meta/rev")) || "0", events, profiles, auto, activity, hasAdmin: !!cfg.adminHash, admin: isAdmin });
   }

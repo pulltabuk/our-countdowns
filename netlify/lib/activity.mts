@@ -37,8 +37,11 @@ export function describe(prev: Doc, next: Doc): string[] {
   return out;
 }
 
+export const KEEP = 7 * 24 * 60 * 60 * 1000; // entries drop off the list after a week
+
 /** Adds an entry to the newest-first list; quick successive changes to one event by one phone become one entry. */
-export function addEntry(list: Entry[], e: Entry, max = 60): Entry[] {
+export function addEntry(all: Entry[], e: Entry, max = 200): Entry[] {
+  const list = all.filter((a) => e.t - a.t < KEEP);
   const top = list[0];
   if (top && top.ev === e.ev && top.k === e.k && (top.owner || "") === (e.owner || "") && e.t - top.t < 10 * 60 * 1000 && e.what[0] !== "removed this event") {
     const what = top.what[0] === "added this event" ? top.what : [...new Set([...e.what, ...top.what])].slice(0, 5);

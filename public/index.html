@@ -528,7 +528,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 <div class="sheet" id="activity" hidden>
   <div class="panel" role="dialog" aria-label="Activity">
     <div class="phead"><h2>Activity</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
-    <p class="hint">What has been added or changed lately, newest first. Tap one to open it.</p>
+    <p class="hint">What has been added or changed in the last 7 days, newest first. Tap one to open it.</p>
     <div class="rows" id="act-rows"></div>
   </div>
 </div>
@@ -1066,20 +1066,21 @@ let activity=[],seenAt=0,actBack=false,shownSeen=0,wantOpen="";
 try{activity=JSON.parse(localStorage.getItem("oc.act")||"[]")||[];seenAt=+localStorage.getItem("oc.seen")||0}catch(e){}
 function agoText(t){const s=Math.max(0,Date.now()-t),m=Math.floor(s/6e4),h=Math.floor(m/60),d=Math.floor((sod(new Date())-sod(new Date(t)))/864e5);
   return m<1?"Just now":m<60?m+(m===1?" minute ago":" minutes ago"):h<24&&d<1?h+(h===1?" hour ago":" hours ago"):d<=1?"Yesterday":d<7?d+" days ago":new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short"})}
-function actBadge(){const n=activity.filter(a=>!a.mine&&a.t>seenAt).length,b=$("act-n");b.hidden=!n;b.textContent=n>9?"9+":String(n);
+const WEEK=7*864e5,recent=()=>activity.filter(a=>Date.now()-a.t<WEEK);
+function actBadge(){const n=recent().filter(a=>!a.mine&&a.t>seenAt).length,b=$("act-n");b.hidden=!n;b.textContent=n>9?"9+":String(n);
   try{if(navigator.setAppBadge){if(n)navigator.setAppBadge(n).catch(()=>{});else navigator.clearAppBadge().catch(()=>{})}}catch(e){}}
 function setActivity(list){
   if(!Array.isArray(list))return;
-  activity=list.filter(a=>a&&a.t&&Array.isArray(a.what)).slice(0,60);try{localStorage.setItem("oc.act",JSON.stringify(activity))}catch(e){}
+  activity=list.filter(a=>a&&a.t&&Array.isArray(a.what)).slice(0,200);try{localStorage.setItem("oc.act",JSON.stringify(activity))}catch(e){}
   if(!$("activity").hidden){drawActivity();markSeen()}else actBadge();
 }
 function drawActivity(){
-  $("act-rows").innerHTML=activity.length?activity.map(a=>{
+  const list=recent();$("act-rows").innerHTML=list.length?list.map(a=>{
     const ev=findEv(a.ev),nm=a.mine?"You":(profiles[a.who]&&profiles[a.who].name)||"Someone",what=a.what.map(String),fresh=!a.mine&&a.t>shownSeen;
     const txt=what.length>1?what.slice(0,-1).join(", ")+" and "+what[what.length-1]:what[0]||"changed it";
     return'<'+(ev?'button type="button" data-act="'+esc(a.ev)+'"':"div")+' class="row arow'+(fresh?" new":"")+'">'+(fresh?'<i class="dot"></i>':"")+(profiles[a.who]?avatar(a.who,"md"):'<span class="av md">'+(a.mine?"Y":"?")+"</span>")
       +'<span class="rt"><b>'+esc(a.title||"An event")+"</b><span>"+esc(nm+" "+txt)+"</span><small>"+esc(agoText(a.t))+"</small></span>"+(ev?'<span class="go">View</span>':"")+"</"+(ev?"button":"div")+">";
-  }).join(""):'<div class="row"><span class="rt"><span>Nothing yet. When either of you adds or changes something, it appears here.</span></span></div>';
+  }).join(""):'<div class="row"><span class="rt"><span>Nothing in the last 7 days. When either of you adds or changes something, it appears here.</span></span></div>';
 }
 function markSeen(){seenAt=Date.now();try{localStorage.setItem("oc.seen",String(seenAt))}catch(e){}actBadge()}
 function openActivity(){
@@ -1468,7 +1469,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795679914";
+const BUILD="1795680024";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
