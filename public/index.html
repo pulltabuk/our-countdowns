@@ -35,7 +35,7 @@ html{-webkit-text-size-adjust:100%}
 [hidden]{display:none!important}
 body{margin:0}
 /* a solid strip behind the phone's clock and battery, always in the colour of the screen being shown */
-#sbar{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#211D38;z-index:50;pointer-events:none}
+#sbar{position:fixed;top:0;left:0;right:0;height:max(env(safe-area-inset-top,0px),4px);background:var(--bg);z-index:50;pointer-events:none}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;text-align:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
@@ -545,6 +545,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="rows" id="manage-rows"></div>
     <div class="acts"><button class="btn ghost" type="button" id="clear-examples" hidden>Remove the examples</button><button class="btn" type="button" id="invite">Invite your partner</button><button class="btn ghost" type="button" id="show-pass">Show the passcode</button><button class="btn ghost" type="button" id="reload">Check for updates</button></div>
     <p class="hint" id="ver"></p>
+    <p class="hint" id="diag"></p>
     <div class="pass" id="pass-box" hidden></div>
     <div class="acts"><button class="btn ghost" type="button" id="notif">Turn on notifications</button></div>
     <p class="hint" id="notif-note">Get a notification on this phone when your partner adds or changes a shared event.</p>
@@ -919,6 +920,7 @@ function rowHTML(ev,sub,action){
   return'<button type="button" class="row" data-edit="'+esc(ev.id)+'"><span class="sw" style="--c:'+c.bg+'">'+esc(ev.icon)+'</span><span class="rt"><b>'+esc(ev.title)+"</b><span>"+esc(sub)+"</span></span>"+(action?'<span class="go">'+action+"</span>":"")+"</button>";
 }
 function renderManage(){
+  try{const v=(navigator.userAgent.match(/OS (\d+[_\d]*)/)||[])[1]||"?";$("diag").textContent="Screen check: top "+$("sbar").offsetHeight+", app "+(navigator.standalone===true||matchMedia("(display-mode: standalone)").matches?"yes":"no")+", iOS "+v.replace(/_/g,".")}catch(e){}
   $("admin-claim").hidden=hasAdmin;$("chg-open").hidden=!isAdmin;if(!isAdmin)$("chg-form").hidden=true;
   $("admin-note").textContent=isAdmin?"You are the administrator. Only this phone can change the passcode.":hasAdmin?"Only the administrator can change the passcode.":"No administrator yet. The administrator is the one phone allowed to change the passcode.";
   const mp=profiles[me];
@@ -998,9 +1000,12 @@ function closeDetail(){claimNew=false;remOpen=null;openId=null;pv=null;$("detail
 /* Screens sit in the normal page flow (no fixed overlays), so every button can be scrolled to. */
 let homeY=0,wasOpen=false,tintNow=null;
 /* The strip behind the phone's clock. iPhones only pick up a new colour from a freshly added tag, so the old one is replaced, not edited. */
-function setTint(c){
-  document.body.style.background=c;document.documentElement.style.background=c;$("sbar").style.background=c?"color-mix(in srgb,"+c+" 62%,#000)":"";/* darkened: the clock above it is always white */
-  if(c===tintNow)return;tintNow=c;
+function setTint(c,strip){
+  document.body.style.background=c;document.documentElement.style.background=c;
+  /* under the clock (when the app reaches that far) a darker shade, as the clock is white; otherwise a thin line in the exact colour, for the phone to copy */
+  let sb=$("sbar");const under=sb.offsetHeight>5,col=under?(c?"color-mix(in srgb,"+c+" 62%,#000)":"#211D38"):(c||strip||"");
+  if(c===tintNow&&col===sb.style.background)return;tintNow=c;
+  const fresh=sb.cloneNode(false);fresh.style.background=col;sb.replaceWith(fresh);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());
   const add=(col,media)=>{const m=document.createElement("meta");m.name="theme-color";m.content=col;if(media)m.media=media;document.head.appendChild(m)};
   if(c)add(c);else{add("#ECEAF3","(prefers-color-scheme: light)");add("#0E0C18","(prefers-color-scheme: dark)")}
@@ -1011,7 +1016,7 @@ function lock(){
   $("app").hidden=open;$("detail").hidden=!openId||sheetOpen;
   // the event page is one solid colour edge to edge, including behind the phone's status bar
   const dev=openId&&!sheetOpen?findEv(openId):null;
-  setTint(dev?colorOf(dev).bg:"");
+  setTint(dev?colorOf(dev).bg:"",sheetOpen?"var(--surface)":"");
   window.scrollTo(0,open?0:homeY);wasOpen=open;
 }
 
@@ -1480,7 +1485,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795720988";
+const BUILD="1795723626";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
