@@ -1,6 +1,8 @@
 import { getStore } from "@netlify/blobs";
 import type { Config, Context } from "@netlify/functions";
 import webpush from "web-push";
+import { addEntry, describe, listChanges, type Entry } from "../lib/activity.mts";
+import { titleFromSlug } from "../lib/due.mts";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 // One blob per date (no read-modify-write), plus one config blob holding the passcode hash.
@@ -111,6 +113,18 @@ export default async (req: Request, context: Context) => {
 
   // "rev" changes on every write, so phones can poll it cheaply and only reload when it moves.
   const bump = () => s.set("meta/rev", String(Date.now()));
+  // Activity: a short running list of who added or changed what, shown on the Activity screen.
+  const meId = req.headers.get("x-me") || "";
+  const who = /^[A-Za-z0-9_-]{1,40}$/.test(meId) ? meId : "";
+  const log = async (ev: string, title: string, what: string[], owner?: string) => {
+    if (!what.length) return;
+    try {
+      const list = ((await s.get("act", { type: "json" })) as Entry[] | null) || [];
+      await s.setJSON("act", addEntry(list, { t: Date.now(), who, k: keyHash, ev, title, what, ...(owner ? { owner } : {}) }));
+    } catch (e) {
+      console.error("activity", e);
+    }
+  };
   if (head === "rev" && req.method === "GET") return json({ rev: (await s.get("meta/rev")) || "0" });
 
   if (head === "profiles" && req.method === "PUT") {
@@ -201,7 +215,12 @@ export default async (req: Request, context: Context) => {
     const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const full = clean({ ...b, title: "x", y: 2000, m: 1, d: 1 });
     if (!full) return json({ error: "invalid" }, 400);
-    await s.setJSON("ao/" + id, { color: full.color, icon: full.icon, scene: full.scene, important: full.important, todo: full.todo });
+    const was = (await s.get("ao/" + id, { type: "json" })) as Record<string, unknown> | null;
+    const now = { color: full.color, icon: full.icon, scene: full.scene, important: full.important, todo: full.todo };
+    await s.setJSON("ao/" + id, now);
+    const what = listChanges(was, now);
+    if (was && ["color", "icon", "scene", "important"].some((k) => String(was[k] ?? "") !== String((now as Record<string, unknown>)[k] ?? ""))) what.push("changed how it looks");
+    await log(id, titleFromSlug(id), what);
     await bump();
     return json({ ok: true });
   }
@@ -233,10 +252,10 @@ export default async (req: Request, context: Context) => {
     }
     return json({ error: "method" }, 405);
   }
-  const notifyOthers = async (title: string, by: string) => {
+  const notifyOthers = async (title: string, by: string, evId: string) => {
     const keys = await vapid();
-    const who = by ? ((await s.get("pf/" + by, { type: "json" })) as { name?: string } | null)?.name : "";
-    const payload = JSON.stringify({ title: "New countdown", body: (who ? who + " added " : "Added: ") + title });
+    const name = by ? ((await s.get("pf/" + by, { type: "json" })) as { name?: string } | null)?.name : "";
+    const payload = JSON.stringify({ title: "New countdown", body: (name ? name + " added " : "Added: ") + title, id: evId });
     const { blobs } = await s.list({ prefix: "push/" });
     await Promise.allSettled(
       blobs.filter((b) => b.key !== "push/" + keyHash).map(async (b) => {
@@ -288,12 +307,15 @@ export default async (req: Request, context: Context) => {
         if (data) auto[b.key.slice(3)] = data;
       }),
     );
-    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles, auto, hasAdmin: !!cfg.adminHash, admin: isAdmin });
+    const activity = (((await s.get("act", { type: "json" })) as Entry[] | null) || [])
+      .filter((a) => !a.owner || a.owner === keyHash)
+      .map(({ k, owner, ...rest }) => ({ ...rest, mine: !!keyHash && k === keyHash }));
+    return json({ rev: (await s.get("meta/rev")) || "0", events, profiles, auto, activity, hasAdmin: !!cfg.adminHash, admin: isAdmin });
   }
 
   if (!id || !/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400);
 
-  const prev = (await s.get("ev/" + id, { type: "json" })) as { owner?: string } | null;
+  const prev = (await s.get("ev/" + id, { type: "json" })) as (Record<string, unknown> & { owner?: string }) | null;
   if (prev?.owner && prev.owner !== keyHash) return json({ error: "private" }, 403);
 
   if (req.method === "PUT") {
@@ -305,13 +327,15 @@ export default async (req: Request, context: Context) => {
       data.owner = keyHash;
     }
     await s.setJSON("ev/" + id, data);
+    await log(id, String(data.title), describe(prev, data), data.owner as string | undefined);
     await bump();
     // Tell the other phone about a brand-new shared event; never about private ones or edits.
-    if (!prev && !data.priv) context.waitUntil(notifyOthers(String(data.title), String(data.by || "")).catch((e) => console.error("notify", e)));
+    if (!prev && !data.priv) context.waitUntil(notifyOthers(String(data.title), String(data.by || ""), id).catch((e) => console.error("notify", e)));
     return json({ ok: true });
   }
   if (req.method === "DELETE") {
     await s.delete("ev/" + id);
+    if (prev) await log(id, String(prev.title || ""), ["removed this event"], prev.owner);
     await bump();
     return json({ ok: true });
   }

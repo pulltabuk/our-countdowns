@@ -14,11 +14,11 @@ export default async () => {
   const subs = (await s.list({ prefix: "push/" })).blobs.map((b) => b.key);
   if (!subs.length) return;
 
-  const send = async (subKey: string, title: string, body: string) => {
+  const send = async (subKey: string, title: string, body: string, id: string) => {
     const sub = (await s.get(subKey, { type: "json" })) as webpush.PushSubscription | null;
     if (!sub) return;
     try {
-      await webpush.sendNotification(sub, JSON.stringify({ title, body }), {
+      await webpush.sendNotification(sub, JSON.stringify({ title, body, id }), {
         TTL: 86400,
         vapidDetails: { subject, publicKey: keys.publicKey, privateKey: keys.privateKey },
       });
@@ -45,7 +45,7 @@ export default async () => {
       // one marker per reminder time, so each is sent once even though this runs repeatedly
       const { modified } = await s.set(`rem/${id}/${r.todoId}/${r.dueAt}`, "1", { onlyIfNew: true });
       if (!modified) continue;
-      await Promise.allSettled(targets.map((k) => send(k, "Reminder: " + title, r.text)));
+      await Promise.allSettled(targets.map((k) => send(k, "Reminder: " + title, r.text, id)));
     }
   }
 };
