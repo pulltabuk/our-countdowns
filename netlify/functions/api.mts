@@ -62,7 +62,7 @@ export default async (req: Request, context: Context) => {
   const s = store();
   const parts = new URL(req.url).pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
   const [head, id] = parts;
-  const cfg = (await s.get("config", { type: "json" })) as { salt: string; hash: string; adminHash?: string } | null;
+  let cfg = (await s.get("config", { type: "json" })) as { salt: string; hash: string; adminHash?: string; adminReset?: string } | null;
 
   if (head === "status" && req.method === "GET") return json({ claimed: !!cfg, hasAdmin: !!cfg?.adminHash });
 
@@ -89,6 +89,16 @@ export default async (req: Request, context: Context) => {
   // event is stored with that key's hash and only ever returned to the phone that holds it.
   const deviceKey = req.headers.get("x-key") || "";
   const keyHash = deviceKey.length >= 32 ? sha(deviceKey) : "";
+  // One-off: the administrator's phone was replaced without its key being carried across, which left the role
+  // held by nobody. Hand it back so it can be claimed again (once only; the marker stops this repeating).
+  if (cfg.adminHash && cfg.adminReset !== "r1") {
+    cfg = { salt: cfg.salt, hash: cfg.hash, adminReset: "r1" };
+    await s.setJSON("config", cfg);
+    await s.set("meta/rev", String(Date.now()));
+  } else if (!cfg.adminReset) {
+    cfg = { ...cfg, adminReset: "r1" };
+    await s.setJSON("config", cfg);
+  }
   const isAdmin = !!cfg.adminHash && adminKey.length >= 32 && sha(adminKey) === cfg.adminHash;
 
   if (head === "admin" && req.method === "POST") {
@@ -115,9 +125,57 @@ export default async (req: Request, context: Context) => {
       const m = (await s.get("mv/" + id, { type: "json" })) as { key: string; admin: string; me: string; exp: number } | null;
       if (m) await s.delete("mv/" + id);
       if (!m || m.exp < Date.now()) return json({ error: "code" }, 404);
+      // anything this copy picked up under its own temporary key (a claimed name, new private events) follows it to the moved key
+      const moved = sha(m.key);
+      if (keyHash && keyHash !== moved) {
+        for (const prefix of ["pf/", "ev/"]) {
+          for (const b of (await s.list({ prefix })).blobs) {
+            const doc = (await s.get(b.key, { type: "json" })) as Record<string, unknown> | null;
+            if (doc && prefix === "pf/" && doc.k === keyHash) await s.setJSON(b.key, { ...doc, k: moved });
+            if (doc && prefix === "ev/" && doc.owner === keyHash) await s.setJSON(b.key, { ...doc, owner: moved });
+          }
+        }
+        await s.set("meta/rev", String(Date.now()));
+      }
       return json({ key: m.key, admin: m.admin, me: m.me });
     }
     return json({ error: "method" }, 405);
+  }
+
+  // A private event is locked to the phone that made it. If that copy of the app is gone and its key was not
+  // moved, the event is stranded. The administrator can bring such events to their phone by naming one of them:
+  // every private event locked to the same lost phone comes back. Phones still in use are never touched.
+  if (head === "recover" && req.method === "POST") {
+    if (!isAdmin) return json({ error: "admin" }, 403);
+    if (!keyHash) return json({ error: "key" }, 400);
+    const norm = (v: unknown) => String(v ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+    const want = norm(str(((await req.json().catch(() => ({}))) as { title?: unknown }).title, 60));
+    if (want.length < 3) return json({ error: "short" }, 400);
+    const inUse = new Set<string>();
+    for (const b of (await s.list({ prefix: "pf/" })).blobs) {
+      const p = (await s.get(b.key, { type: "json" })) as { k?: string } | null;
+      if (p?.k) inUse.add(p.k);
+    }
+    const since = Date.now() - 60 * 864e5;
+    for (const b of (await s.list({ prefix: "seen/" })).blobs) if (Number(await s.get(b.key)) > since) inUse.add(b.key.slice(5));
+    const docs = await Promise.all(
+      (await s.list({ prefix: "ev/" })).blobs.map(async (b) => ({ key: b.key, doc: (await s.get(b.key, { type: "json" })) as Record<string, unknown> | null })),
+    );
+    const lost = new Set<string>();
+    for (const { doc } of docs) {
+      const owner = String(doc?.owner || "");
+      if (!owner || owner === keyHash || inUse.has(owner)) continue;
+      const t = norm(doc?.title);
+      if (t === want || (want.length >= 5 && t.includes(want))) lost.add(owner);
+    }
+    let recovered = 0;
+    for (const { key, doc } of docs) {
+      if (!doc || !lost.has(String(doc.owner || ""))) continue;
+      await s.setJSON(key, { ...doc, owner: keyHash });
+      recovered++;
+    }
+    if (recovered) await s.set("meta/rev", String(Date.now()));
+    return json({ recovered });
   }
 
   if (head === "passcode" && req.method === "POST") {
@@ -332,6 +390,8 @@ export default async (req: Request, context: Context) => {
   if (head !== "events") return json({ error: "not found" }, 404);
 
   if (!id && req.method === "GET") {
+    // note (at most once a day) that this phone is still in use, so its private events are never treated as lost
+    if (keyHash && !(Number(await s.get("seen/" + keyHash)) > Date.now() - 864e5)) await s.set("seen/" + keyHash, String(Date.now()));
     const { blobs } = await s.list({ prefix: "ev/" });
     const events = (
       await Promise.all(

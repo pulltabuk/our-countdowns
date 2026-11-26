@@ -566,6 +566,13 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
       <button class="btn" type="submit" id="chg-save">Save new passcode</button>
     </form>
     <p class="hint" id="invite-note" hidden></p>
+    <form id="rc-form" class="fld" hidden novalidate>
+      <label for="rc-title">Lost a private event after re-adding the app or changing phone? Type its name to bring it back to this phone</label>
+      <input class="inp" id="rc-title" maxlength="60" autocomplete="off" placeholder="Event name">
+      <div class="err" id="rc-err" hidden></div>
+      <p class="hint" id="rc-note" hidden></p>
+      <button class="btn ghost" type="submit" id="rc-go">Bring it back</button>
+    </form>
     <p class="lab2">Moving this app</p>
     <p class="hint">Getting a new phone, or adding the app to your home screen again? Get a move code here first. Entering it in the new copy brings across your private events, your name and (if this is the administrator's phone) the administrator role.</p>
     <div class="acts"><button class="btn ghost" type="button" id="mv-get">Get a move code</button></div>
@@ -938,7 +945,7 @@ function rowHTML(ev,sub,action){
   return'<button type="button" class="row" data-edit="'+esc(ev.id)+'"><span class="sw" style="--c:'+c.bg+'">'+esc(ev.icon)+'</span><span class="rt"><b>'+esc(ev.title)+"</b><span>"+esc(sub)+"</span></span>"+(action?'<span class="go">'+action+"</span>":"")+"</button>";
 }
 function renderManage(){
-  $("admin-claim").hidden=hasAdmin;$("chg-open").hidden=!isAdmin;if(!isAdmin)$("chg-form").hidden=true;
+  $("admin-claim").hidden=hasAdmin;$("chg-open").hidden=!isAdmin;if(!isAdmin)$("chg-form").hidden=true;$("rc-form").hidden=!isAdmin;
   $("admin-note").textContent=isAdmin?"You are the administrator. Only this phone can change the passcode.":hasAdmin?"Only the administrator can change the passcode.":"No administrator yet. The administrator is the one phone allowed to change the passcode.";
   const mp=profiles[me];
   $("me-row").innerHTML=(mp?avatar(me,"md"):'<span class="av md">?</span>')+'<span class="rt"><b>'+(mp?esc(mp.name):"Add your name and photo")+"</b><span>"+(mp?"Your profile":"So you can both see who added what")+'</span></span><span class="go">'+(mp?"Change":"Set up")+"</span>";
@@ -1454,6 +1461,16 @@ $("chg-form").addEventListener("submit",async e=>{
   }catch(x){err("That did not save. Check your connection and try again.")}
   $("chg-save").disabled=false;
 });
+$("rc-form").addEventListener("submit",async e=>{
+  e.preventDefault();const t=$("rc-title").value.trim(),err=m=>{$("rc-err").textContent=m;$("rc-err").hidden=!m},note=m=>{$("rc-note").textContent=m;$("rc-note").hidden=!m};
+  err("");note("");if(t.length<3)return err("Type the event's name.");
+  $("rc-go").disabled=true;
+  try{const d=await api("POST","recover",{title:t});
+    if(d.recovered){note(d.recovered===1?"1 private event is back on this phone.":d.recovered+" private events are back on this phone.");$("rc-title").value="";sync(true)}
+    else err("No lost private event with that name was found. Check the spelling. If the old copy of the app is still on a phone, use a move code from it instead.")}
+  catch(x){err(x.code==="offline"?"No connection. Try again when you are online.":"That did not work. Try again.")}
+  $("rc-go").disabled=false;
+});
 $("mv-get").addEventListener("click",async()=>{
   const n=$("mv-note");n.hidden=false;
   try{const d=await api("POST","move",{me});$("mv-box").hidden=false;$("mv-box").textContent=d.code.slice(0,3)+" "+d.code.slice(3);
@@ -1525,7 +1542,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795729344";
+const BUILD="1795730075";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
