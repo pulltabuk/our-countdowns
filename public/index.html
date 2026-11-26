@@ -544,7 +544,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
     <p class="hint" id="ver"></p>
     <div class="pass" id="pass-box" hidden></div>
     <div class="acts"><button class="btn ghost" type="button" id="notif">Turn on notifications</button></div>
-    <p class="hint" id="notif-note">Get a notification on this phone when your partner adds a shared event.</p>
+    <p class="hint" id="notif-note">Get a notification on this phone when your partner adds or changes a shared event.</p>
     <p class="hint" id="admin-note"></p>
     <div class="acts"><button class="btn ghost" type="button" id="admin-claim" hidden>Make this phone the administrator</button><button class="btn ghost" type="button" id="chg-open" hidden>Change the passcode</button></div>
     <form id="chg-form" class="fld" hidden novalidate>
@@ -1393,7 +1393,7 @@ $("notif").addEventListener("click",async()=>{
       else{
         const key=(await api("GET","push")).key,reg=await navigator.serviceWorker.ready;
         const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
-        await api("POST","push",{sub:sub.toJSON()});note("Notifications are on. This phone will be told when your partner adds a shared event.");
+        await api("POST","push",{sub:sub.toJSON()});note("Notifications are on. This phone will be told when your partner adds or changes a shared event.");
       }
     }
   }catch(e){note("That did not work. Check your connection and try again.")}
@@ -1469,7 +1469,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795680024";
+const BUILD="1795680101";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}

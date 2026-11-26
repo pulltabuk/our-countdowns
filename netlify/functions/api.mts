@@ -209,22 +209,6 @@ export default async (req: Request, context: Context) => {
     }
   }
 
-  // Automatic dates (bank holidays and the like) cannot be renamed or moved, but their look and list can be changed.
-  if (head === "auto" && req.method === "PUT") {
-    if (!id || !/^[a-z0-9-]{1,60}$/.test(id)) return json({ error: "bad id" }, 400);
-    const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-    const full = clean({ ...b, title: "x", y: 2000, m: 1, d: 1 });
-    if (!full) return json({ error: "invalid" }, 400);
-    const was = (await s.get("ao/" + id, { type: "json" })) as Record<string, unknown> | null;
-    const now = { color: full.color, icon: full.icon, scene: full.scene, important: full.important, todo: full.todo };
-    await s.setJSON("ao/" + id, now);
-    const what = listChanges(was, now);
-    if (was && ["color", "icon", "scene", "important"].some((k) => String(was[k] ?? "") !== String((now as Record<string, unknown>)[k] ?? ""))) what.push("changed how it looks");
-    await log(id, titleFromSlug(id), what);
-    await bump();
-    return json({ ok: true });
-  }
-
   // Push notifications: each phone that opts in stores its subscription under its own key.
   const vapid = async () => {
     let v = (await s.get("vapid", { type: "json" })) as { publicKey: string; privateKey: string } | null;
@@ -252,10 +236,11 @@ export default async (req: Request, context: Context) => {
     }
     return json({ error: "method" }, 405);
   }
-  const notifyOthers = async (title: string, by: string, evId: string) => {
+  const sentence = (w: string[]) => (w.length > 1 ? w.slice(0, -1).join(", ") + " and " + w[w.length - 1] : w[0] || "changed it");
+  const notifyOthers = async (heading: string, what: string[], evId: string) => {
     const keys = await vapid();
-    const name = by ? ((await s.get("pf/" + by, { type: "json" })) as { name?: string } | null)?.name : "";
-    const payload = JSON.stringify({ title: "New countdown", body: (name ? name + " added " : "Added: ") + title, id: evId });
+    const name = who ? ((await s.get("pf/" + who, { type: "json" })) as { name?: string } | null)?.name : "";
+    const payload = JSON.stringify({ title: heading, body: (name || "Someone") + " " + sentence(what), id: evId });
     const { blobs } = await s.list({ prefix: "push/" });
     await Promise.allSettled(
       blobs.filter((b) => b.key !== "push/" + keyHash).map(async (b) => {
@@ -274,6 +259,24 @@ export default async (req: Request, context: Context) => {
       }),
     );
   };
+
+  // Automatic dates (bank holidays and the like) cannot be renamed or moved, but their look and list can be changed.
+  if (head === "auto" && req.method === "PUT") {
+    if (!id || !/^[a-z0-9-]{1,60}$/.test(id)) return json({ error: "bad id" }, 400);
+    const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const full = clean({ ...b, title: "x", y: 2000, m: 1, d: 1 });
+    if (!full) return json({ error: "invalid" }, 400);
+    const was = (await s.get("ao/" + id, { type: "json" })) as Record<string, unknown> | null;
+    const now = { color: full.color, icon: full.icon, scene: full.scene, important: full.important, todo: full.todo };
+    await s.setJSON("ao/" + id, now);
+    const what = listChanges(was, now);
+    const listOnly = [...what];
+    if (was && ["color", "icon", "scene", "important"].some((k) => String(was[k] ?? "") !== String((now as Record<string, unknown>)[k] ?? ""))) what.push("changed how it looks");
+    await log(id, titleFromSlug(id), what);
+    if (listOnly.length) context.waitUntil(notifyOthers("Updated: " + titleFromSlug(id), listOnly, id).catch((e) => console.error("notify", e)));
+    await bump();
+    return json({ ok: true });
+  }
 
   if (head !== "events") return json({ error: "not found" }, 404);
 
@@ -327,16 +330,19 @@ export default async (req: Request, context: Context) => {
       data.owner = keyHash;
     }
     await s.setJSON("ev/" + id, data);
-    await log(id, String(data.title), describe(prev, data), data.owner as string | undefined);
+    const what = describe(prev, data);
+    await log(id, String(data.title), what, data.owner as string | undefined);
     await bump();
-    // Tell the other phone about a brand-new shared event; never about private ones or edits.
-    if (!prev && !data.priv) context.waitUntil(notifyOthers(String(data.title), String(data.by || ""), id).catch((e) => console.error("notify", e)));
+    // Tell the other phone about new shared events and changes to them; never about private ones.
+    if (!data.priv && !prev?.owner && what.length)
+      context.waitUntil(notifyOthers((prev ? "Updated: " : "New countdown: ") + data.title, what, id).catch((e) => console.error("notify", e)));
     return json({ ok: true });
   }
   if (req.method === "DELETE") {
     await s.delete("ev/" + id);
     if (prev) await log(id, String(prev.title || ""), ["removed this event"], prev.owner);
     await bump();
+    if (prev && !prev.owner) context.waitUntil(notifyOthers("Removed: " + String(prev.title || ""), ["removed this event"], "").catch((e) => console.error("notify", e)));
     return json({ ok: true });
   }
   return json({ error: "method" }, 405);

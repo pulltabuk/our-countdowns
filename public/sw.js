@@ -36,7 +36,7 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data.json(); } catch (x) {}
-  e.waitUntil(self.registration.showNotification(d.title || "Our Countdowns", { body: d.body || "", icon: "/icon-180.png", badge: "/icon-180.png", data: { id: d.id || "" } }));
+  e.waitUntil(self.registration.showNotification(d.title || "Our Countdowns", { body: d.body || "", icon: "/icon-180.png", badge: "/icon-180.png", data: { id: d.id || "" }, tag: d.id || undefined }));
 });
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
