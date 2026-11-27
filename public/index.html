@@ -310,11 +310,16 @@ form.autoedit [data-own]{display:none!important}
 .hint{margin:0;color:var(--muted);font-size:.9375rem}
 .bellb{position:relative;color:var(--fg)}
 .bellb b{position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:#E0263E;color:#fff;font-size:.8125rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
-.arow{align-items:flex-start}
+.arow{align-items:center;background:var(--surface);position:relative;gap:10px}
+/* each entry can be swiped left to remove it; the red strip behind shows through as it slides */
+.arow-w{position:relative;overflow:hidden;background:#D4263E;touch-action:pan-y}
+.arow-w+.arow-w .arow{border-top:1px solid var(--line)}
+.arow-w .ared{position:absolute;right:18px;top:0;bottom:0;display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:.9375rem}
+.arow .amain{display:flex;align-items:flex-start;gap:14px;flex:1;min-width:0;text-align:left;color:inherit}
+.arow .abin{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;color:#D4263E;background:color-mix(in srgb,#D4263E 13%,var(--surface))}
 .arow .rt b{font-size:1.0625rem}.arow .rt span{display:block;color:var(--fg);font-size:.9375rem;line-height:1.35;margin-top:2px;overflow-wrap:anywhere}
 .arow .rt small{display:block;color:var(--muted);font-size:.8125rem;margin-top:4px}
-.arow .go{align-self:center}
-.arow.new{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.arow.new{background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
 .arow .dot{width:10px;height:10px;border-radius:50%;background:#E0263E;flex:none;align-self:center;margin-left:-6px}
 
 
@@ -539,7 +544,7 @@ input.inp[type=date]::-webkit-date-and-time-value{text-align:left}
 <div class="sheet" id="activity" hidden>
   <div class="panel" role="dialog" aria-label="Activity">
     <div class="phead"><h2>Activity</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
-    <p class="hint">What has been added or changed in the last 7 days, newest first. Tap one to open it.</p>
+    <p class="hint">What has been added or changed in the last 7 days, newest first. Tap one to open it. To remove one from your list, tap its red bin or swipe it to the left.</p>
     <div class="rows" id="act-rows"></div>
   </div>
 </div>
@@ -1104,20 +1109,28 @@ let activity=[],seenAt=0,actBack=false,shownSeen=0,wantOpen="";
 try{activity=JSON.parse(localStorage.getItem("oc.act")||"[]")||[];seenAt=+localStorage.getItem("oc.seen")||0}catch(e){}
 function agoText(t){const s=Math.max(0,Date.now()-t),m=Math.floor(s/6e4),h=Math.floor(m/60),d=Math.floor((sod(new Date())-sod(new Date(t)))/864e5);
   return m<1?"Just now":m<60?m+(m===1?" minute ago":" minutes ago"):h<24&&d<1?h+(h===1?" hour ago":" hours ago"):d<=1?"Yesterday":d<7?d+" days ago":new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short"})}
-const WEEK=7*864e5,recent=()=>activity.filter(a=>Date.now()-a.t<WEEK);
+let actGone=[];try{actGone=JSON.parse(localStorage.getItem("oc.actgone")||"[]")||[]}catch(e){}
+const actKey=a=>a.t+"|"+a.ev;
+const WEEK=7*864e5,recent=()=>activity.filter(a=>Date.now()-a.t<WEEK&&!actGone.includes(actKey(a)));
+/* removing an entry only tidies this phone's list; the other phone keeps its own */
+function hideAct(key){if(!key||actGone.includes(key))return;actGone.push(key);try{localStorage.setItem("oc.actgone",JSON.stringify(actGone))}catch(e){}drawActivity();actBadge()}
 function actBadge(){const n=recent().filter(a=>!a.mine&&a.t>seenAt).length,b=$("act-n");b.hidden=!n;b.textContent=n>9?"9+":String(n);
   try{if(navigator.setAppBadge){if(n)navigator.setAppBadge(n).catch(()=>{});else navigator.clearAppBadge().catch(()=>{})}}catch(e){}}
 function setActivity(list){
   if(!Array.isArray(list))return;
   activity=list.filter(a=>a&&a.t&&Array.isArray(a.what)).slice(0,200);try{localStorage.setItem("oc.act",JSON.stringify(activity))}catch(e){}
+  const keys=activity.map(actKey),kept=actGone.filter(k=>keys.includes(k));if(kept.length!==actGone.length){actGone=kept;try{localStorage.setItem("oc.actgone",JSON.stringify(actGone))}catch(e){}}
   if(!$("activity").hidden){drawActivity();markSeen()}else actBadge();
 }
+const BINSVG='<svg viewBox="0 0 20 20" width="22" height="22" aria-hidden="true"><path d="M7.5 2.5h5l.6 1.5H17v1.8H3V4h3.900zM4.600 7h10.800l-.7 9.300a1.500 1.500 0 01-1.500 1.400H6.800a1.500 1.500 0 01-1.500-1.400zM8 9v6.500h1.400V9zM10.600 9v6.500H12V9z" fill="currentColor"/></svg>';
 function drawActivity(){
   const list=recent();$("act-rows").innerHTML=list.length?list.map(a=>{
     const ev=findEv(a.ev),nm=a.mine?"You":(profiles[a.who]&&profiles[a.who].name)||"Someone",what=a.what.map(String),fresh=!a.mine&&a.t>shownSeen;
     const txt=what.length>1?what.slice(0,-1).join(", ")+" and "+what[what.length-1]:what[0]||"changed it";
-    return'<'+(ev?'button type="button" data-act="'+esc(a.ev)+'"':"div")+' class="row arow'+(fresh?" new":"")+'">'+(fresh?'<i class="dot"></i>':"")+(profiles[a.who]?avatar(a.who,"md"):'<span class="av md">'+(a.mine?"Y":"?")+"</span>")
-      +'<span class="rt"><b>'+esc(a.title||"An event")+"</b><span>"+esc(nm+" "+txt)+"</span><small>"+esc(agoText(a.t))+"</small></span>"+(ev?'<span class="go">View</span>':"")+"</"+(ev?"button":"div")+">";
+    return'<div class="arow-w" data-key="'+esc(actKey(a))+'"><span class="ared">Remove '+BINSVG+'</span><div class="row arow'+(fresh?" new":"")+'">'
+      +'<'+(ev?'button type="button" data-act="'+esc(a.ev)+'"':"div")+' class="amain">'+(fresh?'<i class="dot"></i>':"")+(profiles[a.who]?avatar(a.who,"md"):'<span class="av md">'+(a.mine?"Y":"?")+"</span>")
+      +'<span class="rt"><b>'+esc(a.title||"An event")+"</b><span>"+esc(nm+" "+txt)+"</span><small>"+esc(agoText(a.t)+(ev?" · Tap to view":""))+"</small></span></"+(ev?"button":"div")+">"
+      +'<button type="button" class="abin" data-del="'+esc(actKey(a))+'" aria-label="Remove from this list">'+BINSVG+"</button></div></div>";
   }).join(""):'<div class="row"><span class="rt"><span>Nothing in the last 7 days. When either of you adds or changes something, it appears here.</span></span></div>';
 }
 function markSeen(){seenAt=Date.now();try{localStorage.setItem("oc.seen",String(seenAt))}catch(e){}actBadge()}
@@ -1127,7 +1140,25 @@ function openActivity(){
   history.pushState({oc:1},"");shownSeen=seenAt;$("activity").hidden=false;drawActivity();lock();markSeen();
 }
 $("open-activity").addEventListener("click",openActivity);
-$("act-rows").addEventListener("click",e=>{const r=e.target.closest("[data-act]");if(!r||!findEv(r.dataset.act))return;actBack=true;$("activity").hidden=true;openDetail(r.dataset.act)});
+let swipe=null,swipedAt=0;
+$("act-rows").addEventListener("click",e=>{
+  if(Date.now()-swipedAt<450)return;
+  const d=e.target.closest("[data-del]");if(d){hideAct(d.dataset.del);return}
+  const r=e.target.closest("[data-act]");if(!r||!findEv(r.dataset.act))return;actBack=true;$("activity").hidden=true;openDetail(r.dataset.act)});
+/* swipe an entry to the left to remove it */
+$("act-rows").addEventListener("touchstart",e=>{const w=e.target.closest(".arow-w");if(!w||e.touches.length!==1){swipe=null;return}const t=e.touches[0];swipe={w,row:w.querySelector(".arow"),x:t.clientX,y:t.clientY,dx:0,dir:0}},{passive:true});
+$("act-rows").addEventListener("touchmove",e=>{
+  if(!swipe)return;const t=e.touches[0],dx=t.clientX-swipe.x,dy=t.clientY-swipe.y;
+  if(!swipe.dir){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;swipe.dir=Math.abs(dx)>Math.abs(dy)?1:2}
+  if(swipe.dir!==1)return;swipe.dx=Math.min(0,dx);swipe.row.style.transition="none";swipe.row.style.transform="translateX("+swipe.dx+"px)";
+},{passive:true});
+function swipeEnd(){
+  if(!swipe)return;const s=swipe;swipe=null;if(s.dir!==1)return;swipedAt=Date.now();
+  s.row.style.transition="transform .18s ease-out";
+  if(s.dx<-Math.min(120,s.w.offsetWidth*.33)){s.row.style.transform="translateX(-105%)";setTimeout(()=>hideAct(s.w.dataset.key),190)}
+  else s.row.style.transform="";
+}
+$("act-rows").addEventListener("touchend",swipeEnd);$("act-rows").addEventListener("touchcancel",swipeEnd);
 /* a notification was tapped: go to the event it is about, or to Activity if that event is not on this phone */
 function goTapped(id,last){
   if(!id||!pass)return;
@@ -1542,7 +1573,7 @@ $("gate-form").addEventListener("submit",async e=>{
 });
 
 /* pick up new versions without a reload button: compare the build stamp when the app is opened */
-const BUILD="1795730075";
+const BUILD="1795792429";
 /* the menu shows which version is running and what the last update check found, so a stuck update can be seen */
 const hhmm=d=>d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 function buildLabel(v){const d=new Date(+v*1000);return isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" at "+hhmm(d)}
